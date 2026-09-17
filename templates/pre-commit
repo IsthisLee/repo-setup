@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# 공개 저장소 가드: 내부 문서와 개인 식별 정보가 커밋에 섞이는 것을 막는다.
+#   - 경로: .private/ 아래, docs/design-plan-review*, docs/README-review*, docs/superpowers/ 는 커밋 금지
+#     (저장소마다 다르므로 아래 case 문을 그 저장소에 맞게 고친다)
+#   - 내용: 홈 경로(/Users/<이름>, /home/<이름>) + 패턴(한 줄에 하나). 패턴 출처는 셋이고 합쳐서 적용한다.
+#       1) 팀 공용: .githooks/team-patterns
+#          이 파일만 커밋된다. 그래서 팀원 전부에게 전달된다. 사내 도메인이나 고객사 이름처럼
+#          팀이 함께 막아야 하고 그 저장소 안에서는 이미 알려진 값을 적는다.
+#          자격증명은 절대 넣지 않는다. 저장소가 공개로 바뀌면 이 목록도 공개된다.
+#       2) 개인 공용: $GIT_GUARD_PATTERNS, 없으면 ${XDG_CONFIG_HOME:-$HOME/.config}/git-guard/patterns
+#          저장소 밖에 있어 내 모든 저장소가 한 목록을 쓴다. 커밋되지 않고 남에게도 가지 않는다.
+#       3) 저장소별 비공개: .private/guard-patterns
+#          git 무시 폴더라 커밋되지 않는다. 그 저장소에만 해당하고 남에게 보일 수 없는 값을 적는다.
+#     셋 다 없으면 홈 경로만 막는다.
+# 우회는 git commit --no-verify 뿐이며, 사람이 의도적으로 할 때만 쓴다.
+set -u
+root="$(git rev-parse --show-toplevel)"
+fail=0
+paths=$(git diff --cached --name-only --diff-filter=ACMR)
+for f in $paths; do
+  case "$f" in
+    .private/*|docs/design-plan-review*|docs/README-review*|docs/README-preview*|docs/superpowers/*)
+      echo "pre-commit: 내부 문서는 공개 저장소에 올리지 않는다: $f"; fail=1;;
+  esac
+done
+pattern='/Users/[A-Za-z]|/home/[A-Za-z]'
+# 패턴 파일 한 개를 읽어 pattern 에 덧붙인다. 주석 줄과 빈 줄은 버린다.
+add_patterns() {
+  local file="$1" extra
+  [ -f "$file" ] || return 0
+  extra=$(grep -v '^[[:space:]]*#' "$file" | grep -v '^[[:space:]]*$' | paste -sd '|' -)
+  [ -n "$extra" ] && pattern="$pattern|$extra"
+  return 0
+}
+team_file="$root/.githooks/team-patterns"
+add_patterns "$team_file"
+add_patterns "${GIT_GUARD_PATTERNS:-${XDG_CONFIG_HOME:-${HOME:-}/.config}/git-guard/patterns}"
+add_patterns "$root/.private/guard-patterns"
+for f in $paths; do
+  [ -f "$f" ] || continue
+  # 팀 패턴 파일은 막으려는 문자열을 그대로 품고 있다. 내용 검사에 넣으면 자기 자신을
+  # 커밋하지 못해 팀에 전달할 방법이 없어진다.
+  [ "$root/$f" = "$team_file" ] && continue
+  if git show ":$f" | grep -n -E "$pattern" >/dev/null; then
+    echo "pre-commit: 개인 식별 정보가 있다: $f"
+    git show ":$f" | grep -n -E "$pattern" | head -3 | sed 's/^/    /'
+    fail=1
+  fi
+done
+[ "$fail" -eq 0 ] || { echo "커밋을 막았다. 파일을 .private/로 옮기거나 문자열을 지워라."; exit 1; }
+exit 0

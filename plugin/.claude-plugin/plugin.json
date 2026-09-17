@@ -1,0 +1,13 @@
+{
+  "name": "repo-privacy",
+  "version": "0.1.0",
+  "description": "저장소에 개인 정보와 사내 식별자가 커밋되는 것을 막는 pre-commit 가드를 깔고, 실제로 막히는지 커밋을 시도해 확인하는 커맨드. bash 와 git 만 있으면 되고 언어를 가리지 않는다.",
+  "author": {
+    "name": "IsthisLee",
+    "url": "https://github.com/IsthisLee"
+  },
+  "repository": "https://github.com/IsthisLee/repo-privacy",
+  "homepage": "https://github.com/IsthisLee/repo-privacy",
+  "license": "MIT",
+  "keywords": ["claude-code", "git-hooks", "pre-commit", "privacy", "public-repo"]
+}
