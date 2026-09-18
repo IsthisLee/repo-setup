@@ -48,8 +48,15 @@ helper, GitHub CLI, SSH 순)을 쓴다.
 | 전역 `-g -a claude-code` 하나만 | `~/.claude/skills/<이름>/` 에 실물 복사 | 심링크를 만들지 않는다 |
 | 전역 `-g -a codex` | `~/.agents/skills/<이름>/` 에 실물 복사 | `~/.codex/skills/` 는 만들어지지 않는다 |
 
-설치한 자리에 `skills-lock.json` 이 함께 생긴다. 비공개 원격은 격리한 홈에서도 받아진다.
-`credential.helper` 만 있으면 된다.
+설치한 자리에 `skills-lock.json` 이 함께 생긴다.
+
+**이 저장소는 비공개이므로 받는 쪽에 접근 권한이 있는 git 인증이 있어야 한다.** 인증이 없는 홈에서
+돌리면 `Failed to clone ... fatal: unable to get password from user` 를 내고 `Installation failed`
+로 멈춘다. 조용히 빈 상태로 끝나지 않는다. `credential.helper` 하나만 있어도 받아진다.
+
+**`-y` 를 주면 감지 여부와 무관하게 아주 많은 에이전트에 깐다.** 격리 환경에서 재 보니 57개였고,
+프로젝트에 `.agents/skills/` 와 `.claude/skills/` 말고 `agent/skills/` 까지 생겼다. 폴더를
+늘리고 싶지 않으면 `-a` 로 대상을 좁혀라.
 
 `~/.claude/skills/` 심링크가 만들어지지 않아 Claude Code 에서 스킬이 보이지 않는다는 이슈가
 열려 있다([vercel-labs/skills#851](https://github.com/vercel-labs/skills/issues/851), 확인일
