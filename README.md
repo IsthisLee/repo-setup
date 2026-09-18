@@ -3,11 +3,51 @@
 용도에 맞게 git 저장소를 세팅한다. **기억할 것은 커맨드 하나뿐이다.**
 
 ```
-/repo-setup:auto 공개 오픈소스 라이브러리
+/repo-setup:repo-setup 공개 오픈소스 라이브러리
 ```
 
 진입점이 저장소를 실측하고, 해당하는 것만 골라, 좁은 스킬을 순서대로 부르고, **무엇을 했고 무엇을 왜
 건너뛰었는지** 보고한다.
+
+## 설치
+
+두 경로가 있고 같은 저장소를 쓴다.
+
+**Claude Code** 는 플러그인으로 깐다. 커맨드가 `/repo-setup:repo-setup` 처럼 이름 공간을 갖는다.
+
+```
+/plugin marketplace add IsthisLee/repo-setup
+/plugin install repo-setup
+```
+
+**그 밖의 에이전트**는 [`skills` CLI](https://github.com/vercel-labs/skills) 로 깐다. Codex, Cursor,
+OpenCode 를 포함해 78개 이상을 지원한다.
+
+```bash
+npx skills@latest add IsthisLee/repo-setup          # 이 프로젝트에만
+npx skills@latest add IsthisLee/repo-setup -g       # 전역
+npx skills@latest add IsthisLee/repo-setup --list   # 깔지 않고 목록만
+npx skills@latest add IsthisLee/repo-setup -a codex -a cursor   # 특정 에이전트만
+```
+
+비공개 저장소도 같은 명령으로 받는다. CLI 가 그 저장소 URL 에 이미 설정된 인증(git credential
+helper, GitHub CLI, SSH 순)을 쓴다.
+
+### 깔린 뒤에 알아 둘 것
+
+**실물은 `.agents/skills/<이름>/` 하나고, 에이전트별 폴더에는 심링크가 놓인다.** 이 저장소를 CLI
+1.5.26 으로 프로젝트 범위에 깔아 확인했다(2026-09-18). `.claude/skills/repo-setup` 이
+`../../.agents/skills/repo-setup` 을 가리켰고 `skills-lock.json` 이 함께 생겼다.
+
+**전역 설치(`-g`)는 심링크가 생겼는지 직접 확인하라.** `~/.claude/skills/` 심링크가 만들어지지 않아
+Claude Code 에서 스킬이 보이지 않는다는 이슈가 열려 있다
+([vercel-labs/skills#851](https://github.com/vercel-labs/skills/issues/851), 확인일 2026-09-18,
+상태 OPEN). 나는 전역 설치를 직접 확인하지 않았다.
+
+**Claude Code 와 그 밖의 에이전트는 호출 방식이 다르다.** 두 스킬 모두
+`disable-model-invocation: true` 를 달고 있어서 Claude Code 에서는 **사용자만** 부를 수 있다. 다른
+에이전트는 이 키를 모르므로 모델이 `description` 을 읽고 스스로 고를 수 있다. 그래서 `description`
+에 영어와 한국어를 함께 적었다. 이 차이는 이쪽에서 없앨 수 없다.
 
 ## 왜 이렇게 나눴나
 
@@ -21,7 +61,7 @@
 그래서 **좁은 스킬은 좁게 두어 각자 테스트로 지키고, 진입점은 하나만 둔다.** 진입점이 공통 실측을
 한 번 해서 물려주므로 좁은 스킬마다 같은 측정을 반복하지 않는다.
 
-## 진입점: `auto`
+## 진입점: `repo-setup`
 
 네 축을 실측한다. **추측하지 않는다.**
 
@@ -41,11 +81,11 @@
 
 | 스킬 | 하는 일 |
 |---|---|
-| [`privacy`](#privacy-개인-정보-가드) | 홈 경로·이메일·사내 식별자가 커밋되는 것을 커밋 시점에 막는다 |
+| [`repo-privacy`](#repo-privacy-개인-정보-가드) | 홈 경로·이메일·사내 식별자가 커밋되는 것을 커밋 시점에 막는다 |
 
 ---
 
-## `privacy`: 개인 정보 가드
+## `repo-privacy`: 개인 정보 가드
 
 `bash` 와 `git` 만 있으면 되고 언어를 가리지 않는다.
 
