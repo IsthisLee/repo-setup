@@ -1,6 +1,6 @@
 ---
-name: auto
-description: git 저장소를 용도에 맞게 세팅한다. 공개 여부, 소유(개인/팀), 호스트, 이미 깔린 도구를 먼저 실측하고, 그 저장소에 해당하는 세팅만 골라 좁은 스킬을 순서대로 호출한다. 무엇을 했고 무엇을 왜 건너뛰었는지 함께 보고한다. "저장소 세팅해줘", "공개 저장소 준비", "새 저장소 세팅" 같은 요청에 쓴다.
+name: repo-setup
+description: Set up a git repository for its intended purpose. Measures visibility, ownership (personal or team), host, and existing tooling before acting, then applies only the steps that actually fit and calls the narrow skills in order, reporting what was done and what was skipped with reasons. Use it for requests like "set up this repo", "prepare a public repository", or "new repo setup". git 저장소를 용도에 맞게 세팅한다. 공개 여부, 소유(개인/팀), 호스트, 이미 깔린 도구를 먼저 실측하고, 그 저장소에 해당하는 세팅만 골라 좁은 스킬을 순서대로 호출한다. 무엇을 했고 무엇을 왜 건너뛰었는지 함께 보고한다. "저장소 세팅해줘", "공개 저장소 준비", "새 저장소 세팅" 같은 요청에 쓴다.
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion
 ---
@@ -8,6 +8,9 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion
 # 저장소 세팅
 
 $ARGUMENTS 용도로 이 저장소를 세팅한다. 용도를 안 적었으면 1단계 실측 결과를 보이고 물어본다.
+
+윗줄에 달러 기호가 붙은 대문자 자리표시자가 그대로 보이면, 인자를 넘기지 않는 환경이다. 그때는
+사용자가 바로 앞에서 한 말에서 용도를 읽고, 그래도 없으면 1단계 실측 결과를 보인 뒤 물어본다.
 
 내가 쓰는 언어로 답한다.
 
@@ -54,13 +57,14 @@ gh api user --jq '.login'
 CODEOWNERS 를 넣을 일이 없다.
 
 고른 것과 **뺀 것을 이유와 함께** 사용자에게 보인다. 용도가 모호하거나 되돌리기 어려운 항목이 섞이면
-`AskUserQuestion` 으로 확정받는다. 항목마다 그것이 무엇을 바꾸고 무엇을 감수하는지 적는다.
+선택지를 만들어 사용자에게 확정받는다(Claude Code 라면 `AskUserQuestion` 을 쓴다). 항목마다
+그것이 무엇을 바꾸고 무엇을 감수하는지 적는다.
 
 ## 3. 좁은 스킬을 호출한다
 
 | 스킬 | 언제 | 상태 |
 |---|---|---|
-| `privacy` | 홈 경로·이메일·사내 식별자가 커밋에 섞이면 안 될 때. 사실상 전부 | 있음 |
+| `repo-privacy` | 홈 경로·이메일·사내 식별자가 커밋에 섞이면 안 될 때. 사실상 전부 | 있음 |
 
 호출할 때 1단계 실측 결과를 함께 넘긴다. 그 스킬이 같은 측정을 다시 하지 않아도 되게 한다.
 

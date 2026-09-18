@@ -1,13 +1,15 @@
 # repo-setup
 
-용도에 맞게 git 저장소를 세팅하는 커맨드 모음이다. 진입점 `auto` 하나가 실측해 해당하는 것만 고르고 좁은 스킬을 부른다.
-좁은 스킬은 지금 `privacy`(개인 정보 가드) 하나다.
+용도에 맞게 git 저장소를 세팅하는 커맨드 모음이다. 진입점 `repo-setup` 하나가 실측해 해당하는 것만 고르고 좁은 스킬을 부른다.
+좁은 스킬은 지금 `repo-privacy`(개인 정보 가드) 하나다.
 
 ## 검사 명령
 
 - `tests/guard/unit.sh` — 훅 12건. 패턴 출처 셋이 합쳐지는지, 팀 패턴 파일이 자기 자신을 막지 않는지 본다.
 - `tests/setup/unit.sh` — 활성화 스크립트 14건. 남이 잡은 `core.hooksPath` 를 덮지 않는지 본다.
-- `tests/invariants.sh` — 매니페스트, 폴더명과 `name` 일치, 스킬 수, `auto` 의 스킬 표 대조, 템플릿 인용 대조, 실행 비트, 홈 경로 10건.  **합계 36건.**
+- `tests/invariants.sh` — 매니페스트, 폴더명과 `name` 일치, 스킬 수, `repo-setup` 의 스킬 표 대조,
+  템플릿 인용 대조, `npx skills` 탐색 경로, `description` 병기, 자리표시자 폴백, 부모 경로 참조,
+  실행 비트, 홈 경로 14건.  **합계 40건.**
 - `shellcheck -x -s bash templates/* setup.sh .githooks/* tests/*.sh tests/*/*.sh`
 
 ## 규칙
@@ -18,8 +20,18 @@
 - 저장소 루트의 `.githooks/pre-commit` 과 `setup.sh` 는 **이 저장소 자신에게 건 가드**다.
   `templates/` 에서 복사한 사본이라 내용이 같다. `git config core.hooksPath .githooks` 로 켠다.
 - **커밋에 개인 정보를 넣지 않는다.** 이 저장소가 다루는 주제가 그것이다.
-- **좁은 스킬을 더하거나 빼면 `auto` 의 표와 `tests/invariants.sh` 의 스킬 수를 함께 고친다.**
+- **좁은 스킬을 더하거나 빼면 `repo-setup` 의 표와 `tests/invariants.sh` 의 스킬 수를 함께 고친다.**
   표와 실제가 어긋나면 없는 것을 부르거나 있는 것을 모르게 되고, 둘 다 조용히 일어난다.
+- **스킬은 `plugin/skills/` 에 둔다.** `npx skills` 는 `.claude-plugin/marketplace.json` 의
+  `plugins[].source` 를 풀어 그 아래 `skills/` 를 탐색 경로에 더한다(CLI 1.5.26 의
+  `getPluginSkillPaths`, 확인일 2026-09-18). 스킬을 그 밖으로 옮기면 Claude Code 에서는 계속
+  동작하면서 **다른 에이전트에서만 조용히 사라진다.** `tests/invariants.sh` 가 이 계약을 지킨다.
+- **스킬 본문은 자기 폴더만으로 완결되어야 한다.** `npx skills` 는 스킬 폴더만 복사하므로 부모
+  폴더를 가리키면 깐 쪽에서 그 파일이 없다. `repo-privacy` 가 템플릿 둘을 본문에 그대로 품는
+  이유가 이것이다.
+- **`description` 에 영어와 한국어를 함께 적는다.** Claude Code 밖의 에이전트는
+  `disable-model-invocation` 을 모르므로 `description` 이 스킬을 고르는 유일한 신호다. 본문은
+  한국어로 쓰고 「내가 쓰는 언어로 답한다」 줄에 맡긴다.
 - 커밋 메시지는 `type(scope): 요약` 형식이고 본문에 무엇을 왜 바꿨는지 적는다.
 
 ## 구조
@@ -29,8 +41,8 @@
 **테스트·템플릿·문서를 `plugin/` 안에 두지 않는다.**
 
 - `templates/pre-commit` · `templates/setup.sh` — 대상 저장소에 복사할 원본. 테스트가 이것을 본다.
-- `plugin/skills/auto/SKILL.md` — 진입점. 실측하고 고르고 좁은 스킬을 부르고 보고한다. **세팅을 직접 하지 않는다.**
-- `plugin/skills/privacy/SKILL.md` — 좁은 스킬. 템플릿 둘을 본문에 품는다.
+- `plugin/skills/repo-setup/SKILL.md` — 진입점. 실측하고 고르고 좁은 스킬을 부르고 보고한다. **세팅을 직접 하지 않는다.**
+- `plugin/skills/repo-privacy/SKILL.md` — 좁은 스킬. 템플릿 둘을 본문에 품는다.
 - `tests/` — 위 검사 명령.
 
 ## 주의

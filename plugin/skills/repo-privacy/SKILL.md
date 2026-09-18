@@ -1,6 +1,6 @@
 ---
-name: privacy
-description: 공개 저장소에 개인 정보(홈 경로, 이메일, 사내 도메인, 사적인 저장소 이름)가 커밋되는 것을 막는 pre-commit 가드를 깔고, 실제로 막히는지 커밋을 시도해 확인한다. .githooks/pre-commit 과 setup.sh 를 두고 core.hooksPath 를 건다. 새 공개 저장소를 시작할 때, 세션 프로필이 커밋 가드가 꺼졌다고 알릴 때, 다른 프로젝트로 가드를 옮길 때 쓴다.
+name: repo-privacy
+description: Install a pre-commit guard that blocks personal information (home paths, email addresses, internal domains, private repository names) from being committed, then prove it blocks by attempting a commit. Writes .githooks/pre-commit and setup.sh and sets core.hooksPath. Use it when starting a public repository or porting the guard to another project. 공개 저장소에 개인 정보(홈 경로, 이메일, 사내 도메인, 사적인 저장소 이름)가 커밋되는 것을 막는 pre-commit 가드를 깔고, 실제로 막히는지 커밋을 시도해 확인한다. .githooks/pre-commit 과 setup.sh 를 두고 core.hooksPath 를 건다. 새 공개 저장소를 시작할 때, 세션 프로필이 커밋 가드가 꺼졌다고 알릴 때, 다른 프로젝트로 가드를 옮길 때 쓴다.
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---
@@ -8,6 +8,9 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 # 개인 정보 가드
 
 $ARGUMENTS 에 가드를 깐다(기본값은 현재 저장소). 깔고 나서 **실제로 막히는지 증명한다.**
+
+윗줄에 달러 기호가 붙은 대문자 자리표시자가 그대로 보이면, 인자를 넘기지 않는 환경이다.
+그때는 현재 저장소에 깐다.
 
 내가 쓰는 언어로 답한다.
 
@@ -62,7 +65,7 @@ $ARGUMENTS 에 가드를 깐다(기본값은 현재 저장소). 깔고 나서 **
 순서대로 한다. 5단계를 건너뛰지 않는다. 팀 저장소라면 2·6·7단계는 제안으로 바꾼다.
 
 1. **손대기 전에 저장소를 살핀다.** 넷을 모두 실측한다. 어느 것도 추측하지 않는다.
-   `auto` 가 이 스킬을 부르면서 실측값을 넘겨줬으면 **다시 재지 않는다.** 받은 값을 그대로 쓰고
+   `repo-setup` 이 이 스킬을 부르면서 실측값을 넘겨줬으면 **다시 재지 않는다.** 받은 값을 그대로 쓰고
    무엇을 받아 썼는지 보고에 적는다. 단독으로 불렸으면 여기서 직접 잰다.
    - `git rev-parse --show-toplevel` 로 git 저장소인지 본다. 아니면 멈춘다.
    - `git config core.hooksPath` 를 읽는다. **이미 다른 값이 있으면 다른 훅 관리자가 잡고 있는 것이다.**
