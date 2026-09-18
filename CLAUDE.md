@@ -9,7 +9,7 @@
 - `tests/setup/unit.sh` — 활성화 스크립트 14건. 남이 잡은 `core.hooksPath` 를 덮지 않는지 본다.
 - `tests/invariants.sh` — 매니페스트, 폴더명과 `name` 일치, 스킬 수, `repo-setup` 의 스킬 표 대조,
   템플릿 인용 대조, `npx skills` 탐색 경로, `description` 병기, 자리표시자 폴백, 부모 경로 참조,
-  실행 비트, 홈 경로 14건.  **합계 40건.**
+  매니페스트 description 대조, 실행 비트, 홈 경로 15건.  **합계 41건.**
 - `shellcheck -x -s bash templates/* setup.sh .githooks/* tests/*.sh tests/*/*.sh`
 
 ## 규칙
@@ -23,7 +23,7 @@
 - **좁은 스킬을 더하거나 빼면 `repo-setup` 의 표와 `tests/invariants.sh` 의 스킬 수를 함께 고친다.**
   표와 실제가 어긋나면 없는 것을 부르거나 있는 것을 모르게 되고, 둘 다 조용히 일어난다.
 - **스킬은 `plugin/skills/` 에 둔다.** `npx skills` 는 `.claude-plugin/marketplace.json` 의
-  `plugins[].source` 를 풀어 그 아래 `skills/` 를 탐색 경로에 더한다(CLI 1.5.26 의
+  `plugins[].source` 를 풀어 그 아래 `skills/` 를 탐색 경로에 더한다(CLI 1.7.0 의
   `getPluginSkillPaths`, 확인일 2026-09-18). 스킬을 그 밖으로 옮기면 Claude Code 에서는 계속
   동작하면서 **다른 에이전트에서만 조용히 사라진다.** `tests/invariants.sh` 가 이 계약을 지킨다.
 - **스킬 본문은 자기 폴더만으로 완결되어야 한다.** `npx skills` 는 스킬 폴더만 복사하므로 부모
@@ -32,6 +32,9 @@
 - **`description` 에 영어와 한국어를 함께 적는다.** Claude Code 밖의 에이전트는
   `disable-model-invocation` 을 모르므로 `description` 이 스킬을 고르는 유일한 신호다. 본문은
   한국어로 쓰고 「내가 쓰는 언어로 답한다」 줄에 맡긴다.
+- **스킬 이름을 바꾸면 매니페스트의 `description` 도 고친다.** 두 매니페스트가 같은 문장을
+  복제하고 있어서 한쪽만 고치면 조용히 어긋나고, 낡은 이름은 `claude plugin details` 에만
+  드러난다. `tests/invariants.sh` 가 둘의 일치와 괄호 안 스킬 이름을 본다.
 - 커밋 메시지는 `type(scope): 요약` 형식이고 본문에 무엇을 왜 바꿨는지 적는다.
 
 ## 구조

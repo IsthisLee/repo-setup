@@ -61,7 +61,7 @@ ROUTE
 then ok "repo-setup 이 적은 좁은 스킬 목록이 실제와 같다"
 else bad "repo-setup 의 좁은 스킬 표가 실제와 다르다. 표를 고쳐라"; fi
 
-# npx skills 는 마켓플레이스의 source 아래 skills/ 를 탐색 경로에 더한다(CLI 1.5.26 의
+# npx skills 는 마켓플레이스의 source 아래 skills/ 를 탐색 경로에 더한다(CLI 1.7.0 의
 # getPluginSkillPaths). 스킬을 그 밖으로 옮기면 Claude Code 에서는 계속 동작하면서
 # 다른 에이전트에서만 조용히 사라진다.
 if python3 - "$R" <<'DISC'
@@ -133,6 +133,28 @@ assert not bad, "부모 폴더를 가리키는 스킬: " + ", ".join(bad)
 SELF
 then ok "스킬 본문이 자기 폴더 밖을 가리키지 않는다"
 else bad "스킬이 부모 폴더를 가리킨다. 깐 쪽에서는 그 파일이 없다"; fi
+
+# 매니페스트 둘의 description 은 같은 문장을 복제한 것이라 한쪽만 고치면 조용히 어긋난다.
+# 괄호로 적은 소문자 식별자는 좁은 스킬 이름이므로 실제로 있는 이름이어야 한다.
+# 스킬 이름을 바꾸고 매니페스트를 안 고치면 `claude plugin details` 에만 낡은 이름이 남는다.
+if python3 - "$R" <<'MAN'
+import json, pathlib, re, sys
+root = pathlib.Path(sys.argv[1])
+mk = json.loads((root / ".claude-plugin/marketplace.json").read_text(encoding="utf-8"))
+pl = json.loads((root / "plugin/.claude-plugin/plugin.json").read_text(encoding="utf-8"))
+names = {d.name for d in (root / "plugin/skills").iterdir() if d.is_dir()}
+descs = [("marketplace.plugins[0]", mk["plugins"][0]["description"]),
+         ("marketplace", mk["description"]),
+         ("plugin.json", pl["description"])]
+first = descs[0][1]
+for where, d in descs[1:]:
+    assert d == first, f"{where} 의 description 이 marketplace.plugins[0] 과 다르다"
+for where, d in descs:
+    for tok in re.findall(r"\(([a-z][a-z0-9-]{2,})\)", d):
+        assert tok in names, f"{where} 가 없는 스킬 이름 '{tok}' 을 적었다. 있는 것은 {sorted(names)}"
+MAN
+then ok "매니페스트 description 이 서로 같고 실제 스킬 이름만 적는다"
+else bad "매니페스트 description 이 어긋났거나 없는 스킬 이름을 적었다"; fi
 
 # 템플릿에 실행 비트가 없으면 깐 사람이 첫 줄에서 멈춘다.
 for t in pre-commit setup.sh; do

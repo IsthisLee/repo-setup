@@ -33,16 +33,28 @@ npx skills@latest add IsthisLee/repo-setup -a codex -a cursor   # 특정 에이�
 비공개 저장소도 같은 명령으로 받는다. CLI 가 그 저장소 URL 에 이미 설정된 인증(git credential
 helper, GitHub CLI, SSH 순)을 쓴다.
 
+깔린 뒤 Claude Code 쪽은 `claude plugin details repo-setup` 으로 확인한다. 스킬 둘이
+`Skills (2)  repo-privacy, repo-setup` 으로 잡히고 항상 켜져 있는 비용이 약 294 토큰이다.
+
 ### 깔린 뒤에 알아 둘 것
 
-**실물은 `.agents/skills/<이름>/` 하나고, 에이전트별 폴더에는 심링크가 놓인다.** 이 저장소를 CLI
-1.5.26 으로 프로젝트 범위에 깔아 확인했다(2026-09-18). `.claude/skills/repo-setup` 이
-`../../.agents/skills/repo-setup` 을 가리켰고 `skills-lock.json` 이 함께 생겼다.
+아래는 이 저장소를 원격에서 새로 클론해 **가짜 홈으로 격리한 환경**에서 `skills` CLI 1.7.0 으로
+직접 확인한 결과다(2026-09-18).
 
-**전역 설치(`-g`)는 심링크가 생겼는지 직접 확인하라.** `~/.claude/skills/` 심링크가 만들어지지 않아
-Claude Code 에서 스킬이 보이지 않는다는 이슈가 열려 있다
-([vercel-labs/skills#851](https://github.com/vercel-labs/skills/issues/851), 확인일 2026-09-18,
-상태 OPEN). 나는 전역 설치를 직접 확인하지 않았다.
+| 설치 형태 | 실물이 놓이는 곳 | 에이전트 폴더 |
+|---|---|---|
+| 프로젝트 범위, 에이전트 미지정 | `./.agents/skills/<이름>/` | `.claude/skills/<이름>` 심링크 |
+| 전역 `-g`, 에이전트 둘 지정 | `~/.agents/skills/<이름>/` | `~/.claude/skills/<이름>` 심링크 |
+| 전역 `-g -a claude-code` 하나만 | `~/.claude/skills/<이름>/` 에 실물 복사 | 심링크를 만들지 않는다 |
+| 전역 `-g -a codex` | `~/.agents/skills/<이름>/` 에 실물 복사 | `~/.codex/skills/` 는 만들어지지 않는다 |
+
+설치한 자리에 `skills-lock.json` 이 함께 생긴다. 비공개 원격은 격리한 홈에서도 받아진다.
+`credential.helper` 만 있으면 된다.
+
+`~/.claude/skills/` 심링크가 만들어지지 않아 Claude Code 에서 스킬이 보이지 않는다는 이슈가
+열려 있다([vercel-labs/skills#851](https://github.com/vercel-labs/skills/issues/851), 확인일
+2026-09-18, 상태 OPEN). **1.7.0 에서는 위 네 형태 모두 Claude Code 가 읽는 자리에 스킬이
+놓였다.** 이슈가 적은 재현 형태(`-g -a claude-code`)도 그랬다.
 
 **Claude Code 와 그 밖의 에이전트는 호출 방식이 다르다.** 두 스킬 모두
 `disable-model-invocation: true` 를 달고 있어서 Claude Code 에서는 **사용자만** 부를 수 있다. 다른
