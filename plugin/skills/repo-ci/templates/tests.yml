@@ -1,0 +1,38 @@
+# repo-ci 스킬이 놓는 테스트 워크플로 골격이다. 자리표시자를 실측값으로 바꿔 쓴다.
+#   __DEFAULT_BRANCH__  기본 브랜치 이름. git symbolic-ref 로 확인한 값을 넣는다.
+#   __TEST_COMMAND__    find-test-command.sh 가 알려 준 명령.
+#   __SETUP_STEPS__     언어별 준비 단계. 필요 없으면 그 줄을 통째로 지운다.
+#
+# 액션은 태그로 적혀 있다. SHA 고정은 repo-secure 가 맡는다. 이 파일만 놓고 끝냈으면
+# 액션이 고정되지 않은 상태라는 사실을 보고에 적는다.
+name: Tests
+
+on:
+  push:
+    branches: [__DEFAULT_BRANCH__]
+  pull_request:
+    branches: [__DEFAULT_BRANCH__]
+
+# 기본값은 저장소 설정을 따라가며 쓰기 권한이 붙어 있을 수 있다. 여기서 최소로 못박는다.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # 한 대에서 실패해도 나머지 결과는 봐야 한다.
+      fail-fast: false
+      matrix:
+        # 실제로 지원하는 것만 적는다. 돌려 보지 않은 운영체제를 넣지 않는다.
+        os: [ubuntu-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+__SETUP_STEPS__
+      - name: Run tests
+        run: __TEST_COMMAND__

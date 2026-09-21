@@ -102,6 +102,7 @@ helper, GitHub CLI, SSH 순)을 쓴다.
 |---|---|
 | [`repo-privacy`](#repo-privacy-개인-정보-가드) | 홈 경로·이메일·사내 식별자가 커밋되는 것을 커밋 시점에 막는다 |
 | [`repo-license`](#repo-license-라이선스) | 라이선스를 정하고 `LICENSE` 와 매니페스트가 같은 말을 하게 한다 |
+| [`repo-ci`](#repo-ci-테스트-워크플로) | 테스트가 푸시마다 돌게 하고 실제로 한 번 돌려 확인한다 |
 
 ---
 
@@ -172,12 +173,24 @@ helper, GitHub CLI, SSH 순)을 쓴다.
 종료 코드는 0 맞음, 1 어긋남, 2 git 저장소 아님이다. 알아보는 라이선스는 열두 가지이고 **그
 밖의 본문에는 이름을 붙이지 않는다.** 틀린 이름이 붙으면 아무도 다시 보지 않기 때문이다.
 
+## `repo-ci`: 테스트 워크플로
+
+로컬에서만 도는 테스트는 잊힌다. 자동으로 도는 자리는 푸시와 풀 리퀘스트다.
+
+**테스트가 없으면 워크플로를 만들지 않는다.** 빈 CI 는 아무것도 검사하지 않으면서 초록 표시를
+주고, 그 표시를 브랜치 보호의 필수 검사로 걸면 보호가 껍데기가 된다. 그래서 테스트 명령이
+있는지를 사람 눈이 아니라 `templates/find-test-command.sh` 가 판정한다. `npm init` 이 넣는 기본
+자리표시자는 테스트로 보지 않는다.
+
+**파일을 놓은 것은 검증이 아니다.** 실제로 한 번 돌려 통과를 본 뒤에야 끝났다고 말한다.
+액션을 SHA 로 고정하는 것은 `repo-secure` 가 맡는다.
+
 ---
 
 ## 검사
 
 ```bash
-tests/guard/unit.sh && tests/setup/unit.sh && tests/license/unit.sh && tests/invariants.sh
+tests/guard/unit.sh && tests/setup/unit.sh && tests/license/unit.sh && tests/ci/unit.sh && tests/invariants.sh
 ```
 
 ## 라이선스

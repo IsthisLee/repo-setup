@@ -31,8 +31,8 @@ else bad "폴더명과 name 이 어긋난 스킬이 있다:$mismatch"; fi
 
 # 스킬 수는 조용히 낡는다. 문서가 적은 숫자와 실제가 어긋나면 사람이 못 본다.
 n_sk=$(find "$R/plugin/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
-if [ "$n_sk" = 3 ]; then ok "스킬이 셋이다(repo-setup + repo-privacy + repo-license)"
-else bad "스킬이 셋이 아니다(${n_sk}개). 문서와 이 숫자를 함께 고쳐라"; fi
+if [ "$n_sk" = 4 ]; then ok "스킬이 넷이다(repo-setup + 좁은 스킬 셋)"
+else bad "스킬이 넷이 아니다(${n_sk}개). 문서와 이 숫자를 함께 고쳐라"; fi
 
 # 진입점이 부를 좁은 스킬 목록과 실제 폴더가 어긋나면, 없는 것을 부르거나 있는 것을 모른다.
 # 둘 다 조용히 일어난다. repo-setup 본문의 표에 적힌 이름과 실제 폴더를 대조한다.
