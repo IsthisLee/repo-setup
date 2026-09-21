@@ -87,9 +87,10 @@ $ARGUMENTS 에 가드를 깐다(기본값은 현재 저장소). 깔고 나서 **
 2. **무시 규칙을 먼저 넣는다.**(팀 저장소면 제안만) 대상 저장소의 `.gitignore` 에 `.private/` 가 있는지 확인하고 없으면 넣는다.
    패턴 파일을 만들기 **전에** 해야 한다. 이 줄이 없으면 패턴 파일이 커밋 대상으로 잡힌다.
 
-3. **파일 둘을 쓴다.** 이 문서 아래의 템플릿으로 `.githooks/pre-commit` 과 `setup.sh` 를 만든다. 그다음
-   훅의 `case` 문에 있는 경로 목록을 그 저장소에 맞게 고친다. 해당하는 내부 문서 폴더가 없으면
-   `.private/*` 만 남긴다.
+3. **파일 둘을 복사한다.** 이 스킬 폴더의 `templates/pre-commit` 을 대상 저장소의
+   `.githooks/pre-commit` 으로, `templates/setup.sh` 를 저장소 루트의 `setup.sh` 로 복사한다.
+   **내용을 새로 쓰지 않는다.** 복사한 뒤 실행 비트를 확인한다. 그 저장소에만 있는 내부 문서
+   폴더가 있으면 훅의 `case` 문에 덧붙인다. 없으면 기본값 `.private/*` 그대로 둔다.
 
 4. **켠다.** 길이 둘이고, 1단계가 어느 쪽인지 알려 준다.
 
@@ -140,155 +141,14 @@ $ARGUMENTS 에 가드를 깐다(기본값은 현재 저장소). 깔고 나서 **
 (**개수만. 값은 절대 적지 않는다**), 그리고 5단계의 종료 코드다. 끝내지 못한 단계가 있으면 어느 것이고
 왜인지 적는다. **5단계 결과 없이는 설치됐다고 보고하지 않는다.** 팀 저장소로 판별했으면 그 사실과 근거(`org`·`owner`·`perm` 값)를 적고, 실행하지 않고 제안만 한 단계가 무엇인지 분명히 밝힌다.
 
-## 템플릿: .githooks/pre-commit
+## 템플릿
 
-`case` 문의 경로 목록만 그 저장소에 맞게 고치고 나머지는 그대로 쓴다.
+이 스킬 폴더 안에 실제 파일로 있다. **본문에 옮겨 적지 않는다.** 정본이 둘이 되면 한쪽이 낡는다.
 
-```bash
-#!/usr/bin/env bash
-# 공개 저장소 가드: 내부 문서와 개인 식별 정보가 커밋에 섞이는 것을 막는다.
-#   - 경로: .private/ 아래, docs/design-plan-review*, docs/README-review*, docs/superpowers/ 는 커밋 금지
-#     (저장소마다 다르므로 아래 case 문을 그 저장소에 맞게 고친다)
-#   - 내용: 홈 경로(/Users/<이름>, /home/<이름>) + 패턴(한 줄에 하나). 패턴 출처는 셋이고 합쳐서 적용한다.
-#       1) 팀 공용: .githooks/team-patterns
-#          이 파일만 커밋된다. 그래서 팀원 전부에게 전달된다. 사내 도메인이나 고객사 이름처럼
-#          팀이 함께 막아야 하고 그 저장소 안에서는 이미 알려진 값을 적는다.
-#          자격증명은 절대 넣지 않는다. 저장소가 공개로 바뀌면 이 목록도 공개된다.
-#       2) 개인 공용: $GIT_GUARD_PATTERNS, 없으면 ${XDG_CONFIG_HOME:-$HOME/.config}/git-guard/patterns
-#          저장소 밖에 있어 내 모든 저장소가 한 목록을 쓴다. 커밋되지 않고 남에게도 가지 않는다.
-#       3) 저장소별 비공개: .private/guard-patterns
-#          git 무시 폴더라 커밋되지 않는다. 그 저장소에만 해당하고 남에게 보일 수 없는 값을 적는다.
-#     셋 다 없으면 홈 경로만 막는다.
-# 우회는 git commit --no-verify 뿐이며, 사람이 의도적으로 할 때만 쓴다.
-set -u
-root="$(git rev-parse --show-toplevel)"
-fail=0
-paths=$(git diff --cached --name-only --diff-filter=ACMR)
-for f in $paths; do
-  case "$f" in
-    .private/*|docs/design-plan-review*|docs/README-review*|docs/README-preview*|docs/superpowers/*)
-      echo "pre-commit: 내부 문서는 공개 저장소에 올리지 않는다: $f"; fail=1;;
-  esac
-done
-pattern='/Users/[A-Za-z]|/home/[A-Za-z]'
-# 패턴 파일 한 개를 읽어 pattern 에 덧붙인다. 주석 줄과 빈 줄은 버린다.
-add_patterns() {
-  local file="$1" extra
-  [ -f "$file" ] || return 0
-  extra=$(grep -v '^[[:space:]]*#' "$file" | grep -v '^[[:space:]]*$' | paste -sd '|' -)
-  [ -n "$extra" ] && pattern="$pattern|$extra"
-  return 0
-}
-team_file="$root/.githooks/team-patterns"
-add_patterns "$team_file"
-add_patterns "${GIT_GUARD_PATTERNS:-${XDG_CONFIG_HOME:-${HOME:-}/.config}/git-guard/patterns}"
-add_patterns "$root/.private/guard-patterns"
-for f in $paths; do
-  [ -f "$f" ] || continue
-  # 팀 패턴 파일은 막으려는 문자열을 그대로 품고 있다. 내용 검사에 넣으면 자기 자신을
-  # 커밋하지 못해 팀에 전달할 방법이 없어진다.
-  [ "$root/$f" = "$team_file" ] && continue
-  if git show ":$f" | grep -n -E "$pattern" >/dev/null; then
-    echo "pre-commit: 개인 식별 정보가 있다: $f"
-    git show ":$f" | grep -n -E "$pattern" | head -3 | sed 's/^/    /'
-    fail=1
-  fi
-done
-[ "$fail" -eq 0 ] || { echo "커밋을 막았다. 파일을 .private/로 옮기거나 문자열을 지워라."; exit 1; }
-exit 0
-```
+| 파일 | 대상 저장소의 어디로 |
+|---|---|
+| `templates/pre-commit` | `.githooks/pre-commit` |
+| `templates/setup.sh` | 저장소 루트의 `setup.sh` |
 
-## 템플릿: setup.sh
-
-그대로 복사하고 실행 비트를 채운다(`chmod +x setup.sh`). 다른 훅 관리자가 이미 잡고 있는
-`core.hooksPath` 는 덮지 않고, 대신 공존하는 한 줄을 알려 준다.
-
-```bash
-#!/usr/bin/env bash
-# 이 저장소의 git 훅을 켠다. 필요한 것은 bash 와 git 뿐이다.
-#
-# git 은 훅을 .git/hooks 에서만 찾는다. 이 저장소의 훅은 커밋해 두어야 하므로
-# .githooks/ 에 있고, 그 위치는 git 의 기본 탐색 대상이 아니다. core.hooksPath 를
-# 설정해야 git 이 그곳을 본다. 그 설정은 .git/config 에 저장되고 .git/ 은 커밋되지
-# 않으므로, 클론한 사람마다 한 번 실행해야 한다. 이 스크립트가 그 한 번이다.
-#
-# husky 도 같은 core.hooksPath 를 쓴다. 다른 점은 husky 가 npm install 의 prepare
-# 단계에 그 설정을 얹는다는 것뿐이다. 이 저장소는 Node 를 쓰지 않으므로 얹을
-# npm install 이 없고, 그래서 Node 의존을 들이지 않고 같은 일을 직접 한다.
-#
-# 사용법:
-#   ./setup.sh                  훅을 켠다
-#   ./setup.sh --init-patterns  공용 개인 패턴 파일의 견본을 만든다(없을 때만)
-#   ./setup.sh --force          이미 다른 훅 관리자가 잡고 있어도 덮어쓴다
-set -u
-
-HOOKS_DIR=.githooks
-GLOBAL_PATTERNS="${GIT_GUARD_PATTERNS:-${XDG_CONFIG_HOME:-${HOME:-}/.config}/git-guard/patterns}"
-
-die() { printf '%s\n' "setup: $1" >&2; exit 1; }
-
-init_patterns=0
-force=0
-for arg in "$@"; do
-  case "$arg" in
-    --init-patterns) init_patterns=1;;
-    --force) force=1;;
-    -h|--help) awk 'NR>1 { if ($0 !~ /^#/) exit; sub(/^# ?/, ""); print }' "$0"; exit 0;;
-    *) die "모르는 인자: ${arg}";;
-  esac
-done
-
-root=$(git rev-parse --show-toplevel 2>/dev/null) || die "git 저장소 안에서 실행해라."
-cd "$root" || die "저장소 루트로 이동하지 못했다: ${root}"
-
-[ -d "$HOOKS_DIR" ] || die "${HOOKS_DIR}/ 가 없다. 훅 폴더를 먼저 두어라."
-
-# 훅 파일에 실행 비트가 없으면 git 이 조용히 건너뛴다. 세어서 채운다.
-hooks=0
-for h in "$HOOKS_DIR"/*; do
-  [ -f "$h" ] || continue
-  hooks=$((hooks + 1))
-  [ -x "$h" ] || { chmod +x "$h" && printf '%s\n' "실행 비트를 채웠다: ${h}"; }
-done
-[ "$hooks" -gt 0 ] || die "${HOOKS_DIR}/ 에 훅 파일이 없다."
-
-# core.hooksPath 는 값을 하나만 가진다. 이미 다른 훅 관리자(husky·lefthook 등)가 잡고 있는데
-# 덮으면 그쪽 훅이 조용히 죽는다. 막히는 일이 없어지므로 아무도 눈치채지 못한다.
-# 실측: husky 가 잡은 저장소를 덮자 husky 의 pre-commit 이 돌지 않고 커밋이 통과했다.
-existing=$(git config core.hooksPath 2>/dev/null || true)
-if [ -n "$existing" ] && [ "$existing" != "$HOOKS_DIR" ] && [ "$force" -eq 0 ]; then
-  printf '%s\n' "setup: core.hooksPath 가 이미 '${existing}' 다. 덮으면 그쪽 훅이 조용히 죽는다." >&2
-  printf '%s\n' "  공존하려면 그쪽 관리자의 pre-commit 에 이 한 줄을 넣어라:" >&2
-  printf '%s\n' "      \"\$(git rev-parse --show-toplevel)\"/${HOOKS_DIR}/pre-commit || exit 1" >&2
-  printf '%s\n' "  기존 훅을 버리고 덮어쓰려면: ./setup.sh --force" >&2
-  exit 1
-fi
-
-git config core.hooksPath "$HOOKS_DIR" || die "core.hooksPath 설정에 실패했다."
-
-# 설정했다고 적용된 것이 아니다. 되읽어 확인한다.
-got=$(git config core.hooksPath || true)
-[ "$got" = "$HOOKS_DIR" ] || die "설정이 되읽히지 않는다(값: '${got}')."
-printf '%s\n' "core.hooksPath = ${got}  (훅 ${hooks}개)"
-
-if [ "$init_patterns" -eq 1 ] && [ ! -f "$GLOBAL_PATTERNS" ]; then
-  mkdir -p "$(dirname "$GLOBAL_PATTERNS")" || die "패턴 폴더를 만들지 못했다."
-  cat > "$GLOBAL_PATTERNS" <<'TEMPLATE'
-# 커밋에 들어가면 안 되는 개인 패턴. 한 줄에 하나, grep -E 문법.
-# 이 파일은 저장소 밖에 있어 여러 저장소가 함께 쓴다. 커밋되지 않는다.
-# 예시를 지우고 자신의 값을 적어라.
-# me@example.com
-# my-private-repo-name
-TEMPLATE
-  printf '%s\n' "패턴 견본을 만들었다: ${GLOBAL_PATTERNS}  (내용을 채워라)"
-fi
-
-# 어떤 패턴 출처가 실제로 잡히는지 알린다. 없으면 홈 경로만 막힌다.
-sources=0
-[ -f "$GLOBAL_PATTERNS" ] && { printf '%s\n' "공용 패턴: ${GLOBAL_PATTERNS}"; sources=$((sources + 1)); }
-[ -f .private/guard-patterns ] && { printf '%s\n' "저장소 패턴: .private/guard-patterns"; sources=$((sources + 1)); }
-if [ "$sources" -eq 0 ]; then
-  printf '%s\n' "주의: 개인 패턴 파일이 없어 홈 경로만 막는다. './setup.sh --init-patterns' 로 공용 목록을 만들어라."
-fi
-exit 0
-```
+스킬이 깔릴 때 폴더가 통째로 복사되고 실행 비트도 보존된다. 복사한 뒤 `chmod +x` 가 필요하면
+그 자리에서 채운다. 두 파일의 머리 주석에 무엇을 왜 하는지가 적혀 있으므로, 고치기 전에 읽는다.

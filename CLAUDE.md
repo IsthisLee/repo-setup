@@ -10,15 +10,16 @@
 - `tests/invariants.sh` — 매니페스트, 폴더명과 `name` 일치, 스킬 수, `repo-setup` 의 스킬 표 대조,
   템플릿 인용 대조, `npx skills` 탐색 경로, `description` 병기, 자리표시자 폴백, 부모 경로 참조,
   매니페스트 description 대조, 실행 비트, 홈 경로 15건.  **합계 41건.**
-- `shellcheck -x -s bash templates/* setup.sh .githooks/* tests/*.sh tests/*/*.sh`
+- `shellcheck -x -s bash plugin/skills/*/templates/* setup.sh .githooks/* tests/*.sh tests/*/*.sh`
 
 ## 규칙
 
 - **훅이나 `setup.sh` 를 고치면 테스트를 먼저 쓴다.** RED 를 보고 나서 구현한다.
-- **정본은 `templates/` 다.** 스킬은 그 내용을 품고 있고, 어긋나면 `tests/invariants.sh` 가 잡는다.
-  템플릿을 고쳤으면 스킬의 인용도 다시 박는다.
+- **정본은 스킬 폴더의 `templates/` 다.** `npx skills` 가 스킬 폴더를 통째로 가져가므로 그 안에 두면
+  깐 쪽까지 따라간다. **본문에 옮겨 적지 않는다.** 정본이 둘이 되면 한쪽이 낡고,
+  `tests/invariants.sh` 가 그 인용을 잡는다.
 - 저장소 루트의 `.githooks/pre-commit` 과 `setup.sh` 는 **이 저장소 자신에게 건 가드**다.
-  `templates/` 에서 복사한 사본이라 내용이 같다. `git config core.hooksPath .githooks` 로 켠다.
+  스킬의 `templates/` 에서 복사한 사본이라 내용이 같고, `tests/invariants.sh` 가 어긋남을 잡는다. `git config core.hooksPath .githooks` 로 켠다.
 - **커밋에 개인 정보를 넣지 않는다.** 이 저장소가 다루는 주제가 그것이다.
 - **좁은 스킬을 더하거나 빼면 `repo-setup` 의 표와 `tests/invariants.sh` 의 스킬 수를 함께 고친다.**
   표와 실제가 어긋나면 없는 것을 부르거나 있는 것을 모르게 되고, 둘 다 조용히 일어난다.
@@ -43,7 +44,7 @@
 (`source: "./plugin"`). 플러그인 설치는 폴더를 통째로 복사하고 제외 방법이 없다.
 **테스트·템플릿·문서를 `plugin/` 안에 두지 않는다.**
 
-- `templates/pre-commit` · `templates/setup.sh` — 대상 저장소에 복사할 원본. 테스트가 이것을 본다.
+- `plugin/skills/repo-privacy/templates/` — 대상 저장소에 복사할 원본 둘. 테스트가 이것을 본다.
 - `plugin/skills/repo-setup/SKILL.md` — 진입점. 실측하고 고르고 좁은 스킬을 부르고 보고한다. **세팅을 직접 하지 않는다.**
 - `plugin/skills/repo-privacy/SKILL.md` — 좁은 스킬. 템플릿 둘을 본문에 품는다.
 - `tests/` — 위 검사 명령.

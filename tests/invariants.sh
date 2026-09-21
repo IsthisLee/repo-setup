@@ -17,19 +17,6 @@ v1=$(python3 -c 'import json;print(json.load(open("'"$R"'/plugin/.claude-plugin/
 v2=$(python3 -c 'import json;print(json.load(open("'"$R"'/.claude-plugin/marketplace.json"))["plugins"][0]["version"])' 2>/dev/null)
 if [ -n "$v1" ] && [ "$v1" = "$v2" ]; then ok "버전이 두 매니페스트에서 같다($v1)"; else bad "버전이 다르다($v1 vs $v2)"; fi
 
-# repo-privacy 스킬이 품은 템플릿이 실제 파일과 어긋나면 옮겨 간 사람이 낡은 것을 쓴다.
-# 템플릿을 품는 스킬은 repo-privacy 뿐이라 이 검사는 거기에만 건다.
-if python3 - "$R" <<'TPL'
-import pathlib, sys
-root = pathlib.Path(sys.argv[1])
-skill = (root / "plugin/skills/repo-privacy/SKILL.md").read_text(encoding="utf-8")
-for name in ("pre-commit", "setup.sh"):
-    body = (root / "templates" / name).read_text(encoding="utf-8").rstrip("\n")
-    assert body in skill, f"repo-privacy 스킬의 {name} 인용이 templates/{name} 과 다르다"
-TPL
-then ok "repo-privacy 스킬의 템플릿 인용이 templates/ 와 같다"
-else bad "repo-privacy 스킬의 템플릿 인용이 낡았다. templates/ 로 다시 맞춰라"; fi
-
 # 폴더명과 name 이 어긋나면 그 커맨드가 뜨지 않는다. 스킬 하나를 이름으로 못박으면
 # 새 스킬이 검사 없이 들어오므로 전부 순회한다.
 mismatch=""
@@ -157,13 +144,50 @@ then ok "매니페스트 description 이 서로 같고 실제 스킬 이름만 �
 else bad "매니페스트 description 이 어긋났거나 없는 스킬 이름을 적었다"; fi
 
 # 템플릿에 실행 비트가 없으면 깐 사람이 첫 줄에서 멈춘다.
+# npx skills 는 스킬 폴더를 통째로 가져가며 실행 비트를 보존한다(CLI 1.7.0, 2026-09-22 실측).
+TPL="$R/plugin/skills/repo-privacy/templates"
 for t in pre-commit setup.sh; do
-  if [ -x "$R/templates/$t" ]; then ok "templates/${t} 에 실행 비트가 있다"; else bad "templates/${t} 에 실행 비트가 없다"; fi
+  if [ -x "$TPL/$t" ]; then ok "스킬의 templates/${t} 에 실행 비트가 있다"
+  else bad "스킬의 templates/${t} 가 없거나 실행 비트가 없다"; fi
 done
+
+# 저장소 루트의 가드는 템플릿의 사본이다. 어긋나면 이 저장소가 배포하는 것과
+# 스스로 쓰는 것이 달라지고, 그 사실이 겉으로 드러나지 않는다.
+for pair in ".githooks/pre-commit:pre-commit" "setup.sh:setup.sh"; do
+  copy="${pair%%:*}"; src="${pair##*:}"
+  if [ -f "$R/$copy" ] && diff -q "$R/$copy" "$TPL/$src" >/dev/null 2>&1; then ok "${copy} 가 템플릿과 같다"
+  else bad "${copy} 가 템플릿과 다르다. 템플릿에서 다시 복사해라"; fi
+done
+
+# 템플릿을 본문에 다시 인용하면 정본이 둘이 되어 한쪽이 낡는다.
+# 파일로 두는 편이 부르는 비용도 낮다.
+if python3 - "$R" <<'QUOTE'
+import pathlib, sys
+root = pathlib.Path(sys.argv[1])
+bad = []
+for d in sorted((root / "plugin/skills").iterdir()):
+    if not d.is_dir() or not (d / "templates").is_dir():
+        continue
+    body = (d / "SKILL.md").read_text(encoding="utf-8")
+    for t in sorted((d / "templates").iterdir()):
+        if not t.is_file():
+            continue
+        head = "\n".join(t.read_text(encoding="utf-8").splitlines()[:8])
+        if head and head in body:
+            bad.append(f"{d.name}/{t.name}")
+assert not bad, "본문이 템플릿을 그대로 인용한다: " + ", ".join(bad)
+QUOTE
+then ok "스킬 본문이 템플릿을 다시 인용하지 않는다"
+else bad "템플릿이 본문과 파일 둘로 나뉘었다. 본문의 인용을 지워라"; fi
+
+# 훅 템플릿에 특정 저장소의 폴더 이름이 박히면 남의 저장소에서 무의미한 줄이 된다.
+case_line=$(grep -n '\.private/\*)' "$TPL/pre-commit" | head -1 | cut -d: -f2- | tr -d ' ')
+if [ "$case_line" = ".private/*)" ]; then ok "훅 템플릿의 경로 목록이 저장소를 가리지 않는다"
+else bad "훅 템플릿의 기본 경로 목록이 '.private/*' 하나가 아니다: ${case_line}"; fi
 
 # 개인 패턴이 저장소에 새어 들어가면 안 된다. 이 저장소가 다루는 주제가 바로 그것이다.
 if git -C "$R" ls-files 2>/dev/null | grep -q .; then
-  leak=$(git -C "$R" grep -lE '/Users/[A-Za-z]|/home/[A-Za-z]' -- . 2>/dev/null | grep -v '^templates/' | grep -v '^tests/' || true)
+  leak=$(git -C "$R" grep -lE '/Users/[A-Za-z]|/home/[A-Za-z]' -- . 2>/dev/null | grep -v '^plugin/skills/[a-z-]*/templates/' | grep -v '^tests/' || true)
   if [ -z "$leak" ]; then ok "추적 파일에 홈 경로가 없다"
   else bad "홈 경로가 든 파일이 있다"; printf '%s\n' "$leak" | sed 's/^/    /'; fi
 else

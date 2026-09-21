@@ -148,7 +148,7 @@ helper, GitHub CLI, SSH 순)을 쓴다.
 
 ### 손으로 깔기
 
-`templates/` 의 두 파일을 대상 저장소 루트에 복사하고 `./setup.sh` 를 돌린다.
+`plugin/skills/repo-privacy/templates/` 의 두 파일을 대상 저장소에 복사하고 `./setup.sh` 를 돌린다.
 
 ### 한계
 
