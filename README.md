@@ -104,6 +104,7 @@ helper, GitHub CLI, SSH 순)을 쓴다.
 | [`repo-license`](#repo-license-라이선스) | 라이선스를 정하고 `LICENSE` 와 매니페스트가 같은 말을 하게 한다 |
 | [`repo-ci`](#repo-ci-테스트-워크플로) | 테스트가 푸시마다 돌게 하고 실제로 한 번 돌려 확인한다 |
 | [`repo-secure`](#repo-secure-호스트-보안-층) | 호스트의 보안 기능을 켜고 액션을 SHA 로 고정한다 |
+| [`repo-contrib`](#repo-contrib-협업-준비) | 기여 안내와 신고처, 서식, 리뷰 담당을 놓고 기본 브랜치를 보호한다 |
 
 ---
 
@@ -197,12 +198,24 @@ helper, GitHub CLI, SSH 순)을 쓴다.
 **건 것으로 끝내지 않는다.** 되읽어 값이 바뀌었는지 본다. 호출이 200 을 돌려주고도 값이 안 바뀌는
 항목을 실제로 겪었고, 그런 경우 바뀌었다고 적지 않는다.
 
+## `repo-contrib`: 협업 준비
+
+신고처가 적혀 있지 않으면 취약점이 공개 이슈로 올라온다. 그 순간부터 고치기 전까지 누구나 볼 수
+있다. 기여 안내가 없으면 사람마다 다르게 하고 리뷰에서 매번 같은 말을 반복하게 된다.
+
+**GitHub 은 이 파일들을 한 곳에서만 찾지 않는다.** 루트와 `.github/` 를 모두 보고 CODEOWNERS 는
+`docs/` 까지 본다. 한 곳만 보고 없다고 판단해 덮으면 남이 쓴 문서가 사라진다. 그래서
+`templates/check-contrib.sh` 가 GitHub 이 보는 자리를 모두 훑는다. 빈 `ISSUE_TEMPLATE` 폴더는
+있는 것으로 보지 않는다. 폴더만 있으면 아무 서식도 뜨지 않기 때문이다.
+
+**혼자 쓰는 저장소에 리뷰 승인을 요구하지 않는다.** 자기 PR 을 자기가 병합할 수 없어 막힌다.
+
 ---
 
 ## 검사
 
 ```bash
-tests/guard/unit.sh && tests/setup/unit.sh && tests/license/unit.sh && tests/ci/unit.sh && tests/secure/unit.sh && tests/invariants.sh
+tests/guard/unit.sh && tests/setup/unit.sh && tests/license/unit.sh && tests/ci/unit.sh && tests/secure/unit.sh && tests/contrib/unit.sh && tests/invariants.sh
 ```
 
 ## 라이선스
