@@ -2,7 +2,7 @@
 
 용도에 맞게 git 저장소를 세팅하는 커맨드 모음이다. 진입점 `repo-setup` 하나가 실측해 해당하는 것만 고르고 좁은 스킬을 부른다.
 좁은 스킬은 지금 `repo-privacy`(개인 정보 가드), `repo-license`(라이선스),
-`repo-ci`(테스트 워크플로) 셋이다.
+`repo-ci`(테스트 워크플로), `repo-secure`(호스트 보안 층) 넷이다.
 무엇을 더 만들지와 각 스킬의 경계는 `docs/decisions.md` 에 있다.
 
 ## 검사 명령
@@ -10,6 +10,8 @@
 - `tests/guard/unit.sh` — 훅 12건. 패턴 출처 셋이 합쳐지는지, 팀 패턴 파일이 자기 자신을 막지 않는지 본다.
 - `tests/setup/unit.sh` — 활성화 스크립트 14건. 남이 잡은 `core.hooksPath` 를 덮지 않는지 본다.
 - `tests/license/unit.sh` — 라이선스 대조기 24건. 알아보지 못한 본문에 이름을 붙이지 않는지 본다.
+- `tests/secure/unit.sh` — 워크플로 보안 검사기와 골격 둘 25건. 태그 참조를 고정으로 보지
+  않는지, 스스로 놓는 골격이 태그를 쓰지 않는지 본다.
 - `tests/ci/unit.sh` — 테스트 명령 실측기와 워크플로 골격 21건. `npm` 의 기본 자리표시자를
   테스트로 보지 않는지, 골격이 쓰기 권한을 주지 않는지 본다.
 - `tests/invariants.sh` — 매니페스트, 폴더명과 `name` 일치, 스킬 수, `repo-setup` 의 스킬 표 대조,
@@ -52,6 +54,7 @@
 - `plugin/skills/repo-privacy/templates/` — 대상 저장소에 복사할 원본 둘. 테스트가 이것을 본다.
 - `plugin/skills/repo-license/SKILL.md` · `templates/check-license.sh` — 좁은 스킬. 선언 대조기를 함께 싣는다.
 - `plugin/skills/repo-ci/SKILL.md` · `templates/` — 좁은 스킬. 실측기와 워크플로 골격을 함께 싣는다.
+- `plugin/skills/repo-secure/SKILL.md` · `templates/` — 좁은 스킬. 보안 검사기와 골격 둘을 함께 싣는다.
 - `plugin/skills/repo-setup/SKILL.md` — 진입점. 실측하고 고르고 좁은 스킬을 부르고 보고한다. **세팅을 직접 하지 않는다.**
 - `plugin/skills/repo-privacy/SKILL.md` — 좁은 스킬. 템플릿 둘을 본문에 품는다.
 - `tests/` — 위 검사 명령.

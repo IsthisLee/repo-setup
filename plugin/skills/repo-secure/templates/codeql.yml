@@ -1,0 +1,58 @@
+# repo-secure 가 놓는 코드 스캐닝 워크플로다. 자리표시자를 실측값으로 바꿔 쓴다.
+#   __DEFAULT_BRANCH__   기본 브랜치 이름. git symbolic-ref 로 확인한 값.
+#   __LANGUAGES__        그 저장소에 실제로 있는 CodeQL 지원 언어. 예: [python, actions]
+#   __CHECKOUT_SHA__     actions/checkout 의 40자 SHA
+#   __CODEQL_SHA__       github/codeql-action 의 40자 SHA. init 과 analyze 가 같아야 한다.
+#
+# SHA 는 이렇게 구한다(주석 달린 태그에도 동작한다. 2026-09-22 확인).
+#   gh api repos/actions/checkout/commits/v5 --jq '.sha'
+#   gh api repos/github/codeql-action/commits/v4 --jq '.sha'
+# 옆에 어느 태그였는지 주석으로 남긴다. 숫자만 남으면 나중에 아무도 읽지 못한다.
+#
+# 셸은 CodeQL 대상 언어가 아니다. actions 는 워크플로 YAML 자체를 본다.
+# 고정되지 않은 액션, 과한 토큰 권한, 스크립트 인젝션이 그 대상이다.
+name: CodeQL
+
+on:
+  push:
+    branches: [__DEFAULT_BRANCH__]
+  pull_request:
+    branches: [__DEFAULT_BRANCH__]
+  schedule:
+    # 주 1회. 새로 알려진 취약점은 코드를 안 고쳐도 나타난다.
+    - cron: "27 3 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      # 결과를 올리는 데 필요한 것만 준다.
+      security-events: write
+      actions: read
+      contents: read
+    strategy:
+      # 한 언어가 실패해도 나머지 분석 결과는 올라가야 한다.
+      fail-fast: false
+      matrix:
+        language: __LANGUAGES__
+    steps:
+      - name: Checkout
+        uses: actions/checkout@__CHECKOUT_SHA__
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@__CODEQL_SHA__
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@__CODEQL_SHA__
+        with:
+          category: "/language:${{ matrix.language }}"

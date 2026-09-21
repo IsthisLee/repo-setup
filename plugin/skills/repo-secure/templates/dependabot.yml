@@ -1,0 +1,27 @@
+# repo-secure 가 놓는 의존성 판올림 설정이다.
+# updates 항목은 그 저장소에 실제로 있는 것만 남긴다. 없는 생태계를 적으면
+# dependabot 이 조용히 아무것도 하지 않고, 켜 둔 줄 알고 넘어가게 된다.
+version: 2
+updates:
+  # 액션은 어느 저장소에나 있다. 고정된 SHA 를 판올림하는 유일한 수단이기도 하다.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      # init 과 analyze 는 판이 같아야 한다. 따로 올라오면 한쪽만 병합됐을 때
+      # 분석이 깨지고, 그 사실이 빨간 줄 하나로만 드러난다.
+      codeql-action:
+        patterns:
+          - "github/codeql-action*"
+
+  # 아래는 해당할 때만 남긴다. 그 저장소에 그 파일이 실제로 있는지 확인하고 지운다.
+  # - package-ecosystem: "npm"     # package.json 이 있을 때
+  #   directory: "/"
+  #   schedule: { interval: "weekly" }
+  # - package-ecosystem: "pip"     # requirements.txt 나 pyproject.toml 이 있을 때
+  #   directory: "/"
+  #   schedule: { interval: "weekly" }
+  # - package-ecosystem: "cargo"   # Cargo.toml 이 있을 때
+  #   directory: "/"
+  #   schedule: { interval: "weekly" }

@@ -103,6 +103,7 @@ helper, GitHub CLI, SSH 순)을 쓴다.
 | [`repo-privacy`](#repo-privacy-개인-정보-가드) | 홈 경로·이메일·사내 식별자가 커밋되는 것을 커밋 시점에 막는다 |
 | [`repo-license`](#repo-license-라이선스) | 라이선스를 정하고 `LICENSE` 와 매니페스트가 같은 말을 하게 한다 |
 | [`repo-ci`](#repo-ci-테스트-워크플로) | 테스트가 푸시마다 돌게 하고 실제로 한 번 돌려 확인한다 |
+| [`repo-secure`](#repo-secure-호스트-보안-층) | 호스트의 보안 기능을 켜고 액션을 SHA 로 고정한다 |
 
 ---
 
@@ -185,12 +186,23 @@ helper, GitHub CLI, SSH 순)을 쓴다.
 **파일을 놓은 것은 검증이 아니다.** 실제로 한 번 돌려 통과를 본 뒤에야 끝났다고 말한다.
 액션을 SHA 로 고정하는 것은 `repo-secure` 가 맡는다.
 
+## `repo-secure`: 호스트 보안 층
+
+커밋 훅은 커밋 시점만 본다. 이미 푸시된 것, 남이 자기 기계에서 푸시한 것, `--no-verify` 로 넘긴
+것은 호스트 층만 잡는다. 두 층은 서로를 대체하지 않는다.
+
+액션은 남의 코드를 내 자격증명과 함께 돌린다. 태그는 옮길 수 있어서 같은 `@v5` 가 어제와 다른
+코드를 가리킬 수 있고, **그 사실이 diff 에 남지 않는다.** 그래서 40자 SHA 로 고정한다.
+
+**건 것으로 끝내지 않는다.** 되읽어 값이 바뀌었는지 본다. 호출이 200 을 돌려주고도 값이 안 바뀌는
+항목을 실제로 겪었고, 그런 경우 바뀌었다고 적지 않는다.
+
 ---
 
 ## 검사
 
 ```bash
-tests/guard/unit.sh && tests/setup/unit.sh && tests/license/unit.sh && tests/ci/unit.sh && tests/invariants.sh
+tests/guard/unit.sh && tests/setup/unit.sh && tests/license/unit.sh && tests/ci/unit.sh && tests/secure/unit.sh && tests/invariants.sh
 ```
 
 ## 라이선스
