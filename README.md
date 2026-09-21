@@ -101,6 +101,7 @@ helper, GitHub CLI, SSH 순)을 쓴다.
 | 스킬 | 하는 일 |
 |---|---|
 | [`repo-privacy`](#repo-privacy-개인-정보-가드) | 홈 경로·이메일·사내 식별자가 커밋되는 것을 커밋 시점에 막는다 |
+| [`repo-license`](#repo-license-라이선스) | 라이선스를 정하고 `LICENSE` 와 매니페스트가 같은 말을 하게 한다 |
 
 ---
 
@@ -159,10 +160,24 @@ helper, GitHub CLI, SSH 순)을 쓴다.
 
 ---
 
+## `repo-license`: 라이선스
+
+라이선스 선언은 두 곳에 흩어진다. `LICENSE` 파일의 본문과 매니페스트의 `license` 필드다. 하나만
+고치면 나머지가 낡는데, 어긋나도 아무것도 깨지지 않아서 사람이 알아채지 못한다.
+
+**대신 고르지 않는다.** 라이선스는 법적 결정이라 선택지와 차이를 보이고 사람이 정한다. 전문은
+손으로 적지 않고 GitHub 라이선스 API 에서 받는다. 저작권자 이름과 연도도 추측하지 않고 묻는다.
+
+함께 실리는 `templates/check-license.sh` 가 선언을 대조한다. `bash` 와 `git` 만 있으면 되고,
+종료 코드는 0 맞음, 1 어긋남, 2 git 저장소 아님이다. 알아보는 라이선스는 열두 가지이고 **그
+밖의 본문에는 이름을 붙이지 않는다.** 틀린 이름이 붙으면 아무도 다시 보지 않기 때문이다.
+
+---
+
 ## 검사
 
 ```bash
-tests/guard/unit.sh && tests/setup/unit.sh && tests/invariants.sh
+tests/guard/unit.sh && tests/setup/unit.sh && tests/license/unit.sh && tests/invariants.sh
 ```
 
 ## 라이선스

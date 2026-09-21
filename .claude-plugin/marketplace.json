@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
   "name": "repo-setup",
   "version": "1.0.0",
-  "description": "용도에 맞게 git 저장소를 세팅하는 커맨드 모음. 진입점 하나가 공개 여부·소유·호스트·기존 도구를 실측해 해당하는 것만 고르고, 좁은 스킬을 순서대로 호출한 뒤 무엇을 했고 무엇을 왜 건너뛰었는지 보고한다. 현재 좁은 스킬은 개인 정보 가드(repo-privacy) 하나다.",
+  "description": "용도에 맞게 git 저장소를 세팅하는 커맨드 모음. 진입점 하나가 공개 여부·소유·호스트·기존 도구를 실측해 해당하는 것만 고르고, 좁은 스킬을 순서대로 호출한 뒤 무엇을 했고 무엇을 왜 건너뛰었는지 보고한다.",
   "owner": {
     "name": "IsthisLee",
     "url": "https://github.com/IsthisLee"
@@ -11,7 +11,7 @@
     {
       "name": "repo-setup",
       "version": "0.1.0",
-      "description": "용도에 맞게 git 저장소를 세팅하는 커맨드 모음. 진입점 하나가 공개 여부·소유·호스트·기존 도구를 실측해 해당하는 것만 고르고, 좁은 스킬을 순서대로 호출한 뒤 무엇을 했고 무엇을 왜 건너뛰었는지 보고한다. 현재 좁은 스킬은 개인 정보 가드(repo-privacy) 하나다.",
+      "description": "용도에 맞게 git 저장소를 세팅하는 커맨드 모음. 진입점 하나가 공개 여부·소유·호스트·기존 도구를 실측해 해당하는 것만 고르고, 좁은 스킬을 순서대로 호출한 뒤 무엇을 했고 무엇을 왜 건너뛰었는지 보고한다.",
       "author": {
         "name": "IsthisLee",
         "url": "https://github.com/IsthisLee"

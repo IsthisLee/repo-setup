@@ -31,8 +31,8 @@ else bad "폴더명과 name 이 어긋난 스킬이 있다:$mismatch"; fi
 
 # 스킬 수는 조용히 낡는다. 문서가 적은 숫자와 실제가 어긋나면 사람이 못 본다.
 n_sk=$(find "$R/plugin/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
-if [ "$n_sk" = 2 ]; then ok "스킬이 둘이다(repo-setup + repo-privacy)"
-else bad "스킬이 둘이 아니다(${n_sk}개). 문서와 이 숫자를 함께 고쳐라"; fi
+if [ "$n_sk" = 3 ]; then ok "스킬이 셋이다(repo-setup + repo-privacy + repo-license)"
+else bad "스킬이 셋이 아니다(${n_sk}개). 문서와 이 숫자를 함께 고쳐라"; fi
 
 # 진입점이 부를 좁은 스킬 목록과 실제 폴더가 어긋나면, 없는 것을 부르거나 있는 것을 모른다.
 # 둘 다 조용히 일어난다. repo-setup 본문의 표에 적힌 이름과 실제 폴더를 대조한다.
@@ -122,8 +122,8 @@ then ok "스킬 본문이 자기 폴더 밖을 가리키지 않는다"
 else bad "스킬이 부모 폴더를 가리킨다. 깐 쪽에서는 그 파일이 없다"; fi
 
 # 매니페스트 둘의 description 은 같은 문장을 복제한 것이라 한쪽만 고치면 조용히 어긋난다.
-# 괄호로 적은 소문자 식별자는 좁은 스킬 이름이므로 실제로 있는 이름이어야 한다.
-# 스킬 이름을 바꾸고 매니페스트를 안 고치면 `claude plugin details` 에만 낡은 이름이 남는다.
+# 설명이 스킬을 열거하면 스킬을 더할 때마다 낡는다. 낡은 문장은
+# `claude plugin details` 에만 드러나서 아무도 보지 않는다. 그래서 이름을 아예 금한다.
 if python3 - "$R" <<'MAN'
 import json, pathlib, re, sys
 root = pathlib.Path(sys.argv[1])
@@ -137,11 +137,11 @@ first = descs[0][1]
 for where, d in descs[1:]:
     assert d == first, f"{where} 의 description 이 marketplace.plugins[0] 과 다르다"
 for where, d in descs:
-    for tok in re.findall(r"\(([a-z][a-z0-9-]{2,})\)", d):
-        assert tok in names, f"{where} 가 없는 스킬 이름 '{tok}' 을 적었다. 있는 것은 {sorted(names)}"
+    for n in sorted(names):
+        assert n not in d, f"{where} 가 스킬 이름 '{n}' 을 적었다. 열거하는 문장은 반드시 낡는다"
 MAN
-then ok "매니페스트 description 이 서로 같고 실제 스킬 이름만 적는다"
-else bad "매니페스트 description 이 어긋났거나 없는 스킬 이름을 적었다"; fi
+then ok "매니페스트 description 이 서로 같고 스킬을 열거하지 않는다"
+else bad "매니페스트 description 이 어긋났거나 스킬을 열거한다"; fi
 
 # 템플릿에 실행 비트가 없으면 깐 사람이 첫 줄에서 멈춘다.
 # npx skills 는 스킬 폴더를 통째로 가져가며 실행 비트를 보존한다(CLI 1.7.0, 2026-09-22 실측).
