@@ -26,7 +26,7 @@
 | # | 주제 | 결정 |
 |---|---|---|
 | 1 | 스킬 구조 | `repo-setup` 하나만 스킬로 남기고 `disable-model-invocation: true` 를 유지한다. 지금의 다섯은 그 폴더 안의 목적별 폴더가 되고, 진입점은 고른 목적의 절차 문서만 읽는다. `/repo-setup license` 처럼 인자로 목적 하나만 고를 수도 있다 |
-| 2 | 판정 수단 | 가드(`pre-commit`, `commit-msg`)와 `setup.sh` 는 계속 bash 와 git 만 쓴다. 나머지 판정은 `gh`(GitHub API)와 zizmor 가 맡고, `gh` 는 필수다 |
+| 2 | 판정 수단 | 가드(`pre-commit`, `commit-msg`)와 설정 스크립트 `script/setup` 은 계속 bash 와 git 만 쓴다. 나머지 판정은 `gh`(GitHub API)와 zizmor 가 맡고, `gh` 는 필수다 |
 | 3 | 제거 | `codeql.yml` 골격, contrib 골격 셋(CODEOWNERS, `ISSUE_TEMPLATE/`, PR 템플릿), CLAUDE.md 의 테스트 건수, `find-test-command.sh`, `check-workflow-security.sh`, `check-contrib.sh`, license 의 python3 폴백 |
 | 4 | main 보호 | 룰셋으로 옮긴다. 규칙은 넷이다. `pull_request`(승인 0명), `required_status_checks`(strict), `non_fast_forward`, `deletion`. 우회는 저장소 관리자만 `bypass_mode: pull_request` 로 허용한다. 팀 저장소는 계획만 보이고 적용하지 않는다 |
 | 5 | 필수 검사의 출처 | 워크플로가 실제로 돈 커밋의 check-runs 에서 이름과 앱 id 를 읽어 `context` 와 `integration_id` 로 건다. 어느 것을 필수로 둘지는 결정 19 로 사람이 고른다. 완료된 실행이 없으면 필수 검사를 걸지 않고 그 사실을 보고한다 |
@@ -34,13 +34,13 @@
 | 7 | zizmor | 로컬에서 한 번 돌리고, 대상 저장소에도 워크플로로 둔다. `regular` 페르소나에 `--min-severity=low` 로 돌려 low 이상이면 실패시킨다. `zizmor.yml` 로 모든 액션에 SHA 고정을 요구하고, 예외는 `zizmor.yml` 에 이유 주석과 함께 적을 때만 인정한다. 설치돼 있지 않으면 설치 명령을 보이고 멈춘다(자동 설치하지 않는다). 기존 발견은 결정 20 으로 처리한다 |
 | 8 | 테스트 판정 | 에이전트가 후보 명령을 로컬에서 실제로 돌리고, 테스트된 판독 스크립트가 요약 줄에서 개수를 읽는다. 0개면 워크플로를 놓지 않는다. 알아보지 못하면 exit 2 로 돌리고, 출력 끝 20줄을 보여 주며 사람에게 확인받는다 |
 | 9 | 쓰기 스크립트 | 인자 없이 돌리면 계획만 출력하고, `--apply` 를 줘야 보낸다. 보낸 뒤에는 되읽어 확인하고 되돌리는 명령을 출력한다. 종료 코드는 0·1·2 셋이다(3.7절) |
-| 10 | privacy 나머지 | 셋 모두 넣는다. (a) 내용 검사는 추가된 줄만 하고(바이너리는 blob 전체), 내장 예외 넷을 두고, Windows 경로를 더한다. (b) `commit-msg` 훅으로 커밋 메시지도 검사한다. (c) `setup.sh` 가 훅이 아닌 파일에 실행 비트를 붙이지 않는다 |
+| 10 | privacy 나머지 | 셋 모두 넣는다. (a) 내용 검사는 추가된 줄만 하고(바이너리는 blob 전체), 내장 예외 넷을 두고, Windows 경로를 더한다. (b) `commit-msg` 훅으로 커밋 메시지도 검사한다. (c) `script/setup` 이 훅이 아닌 파일에 실행 비트를 붙이지 않는다 |
 | 11 | 내장 홈 경로 예외 | 홈 폴더(`/home/`) 바로 아래가 정확히 `runner`, `node`, `vscode`, `linuxbrew` 인 경로만 예외다. macOS 의 공용 폴더(Users 아래 Shared)와 클라우드 기본 계정(`ubuntu`, `ec2-user`)은 계속 막는다. 예외 목록은 훅에 박힌 고정 목록이고 설정으로 늘릴 수 없다 |
 | 12 | 자체 CI | `pull_request` 와 main 푸시에서 `ubuntu-latest` 와 `macos-latest` 로 돌린다. 같은 브랜치에 새로 푸시하면 이전 실행을 취소하고, 권한은 `contents: read` 만 주며, 액션은 SHA 로 고정한다. 저장소가 공개로 바뀌어(2026-09-22) 표준 러너는 무료다 |
 | 13 | 호환성 | `breaking` 라벨을 만들어 ③ 에 붙이고, 두 매니페스트를 0.2.0 으로 올린다. README 에 이전 판에서 옮겨 오는 방법을 적는다 |
-| 14 | PR 분할 | 기능별로 나눈다(4절, 12개). squash 병합이므로 PR 하나가 main 의 커밋 하나가 된다. 처음에는 10개였고, 두 번째 인터뷰에서 확인 흐름과 변경 전달(④)이, 세 번째 인터뷰에서 ADR 전환(②)이 더해졌다 |
+| 14 | PR 분할 | 기능별로 나눈다(4절, 14개). squash 병합이므로 PR 하나가 main 의 커밋 하나가 된다. 처음에는 10개였고, 두 번째 인터뷰에서 확인 흐름과 변경 전달(④)이, 세 번째 인터뷰에서 문서 구조 전환(②)과 가드를 켜는 방식 둘(⑧, ⑨)이 더해졌다 |
 | 15 | 종단 검증 | 공개 임시 저장소 둘(처음 세팅하는 저장소, 활발한 저장소를 흉내 낸 저장소)과 이 저장소에서 한다(8절) |
-| 16 | 스펙 위치와 수명 | 이 파일은 저장소 루트의 `SPEC.md` 이고 ① 과 함께 커밋한다. 파일 이름에 날짜를 넣지 않는다(날짜는 git 이력과 이 문서 첫 줄에 있다). 진행 중인 계획만 담는 임시 문서다. 각 PR 은 구현한 기능의 무엇·어떻게를 wiki 페이지에(결정 22), 왜를 ADR 에(결정 21) 같은 PR 안에서 옮긴다. 마지막 PR ⑫ 에서 2절의 결정이 모두 wiki, ADR, 코드·테스트 중 한 곳으로 옮겨졌는지 확인한 뒤 이 파일을 지운다 |
+| 16 | 스펙 위치와 수명 | 이 파일은 저장소 루트의 `SPEC.md` 이고 ① 과 함께 커밋한다. 파일 이름에 날짜를 넣지 않는다(날짜는 git 이력과 이 문서 첫 줄에 있다). 진행 중인 계획만 담는 임시 문서다. 각 PR 은 구현한 기능의 무엇·어떻게를 wiki 페이지에(결정 22), 왜를 ADR 에(결정 21) 같은 PR 안에서 옮긴다. 마지막 PR ⑭ 에서 2절의 결정이 모두 wiki, ADR, 코드·테스트 중 한 곳으로 옮겨졌는지 확인한 뒤 이 파일을 지운다 |
 | 17 | 확인 흐름 | 두 층으로 받는다. 먼저 실측 결과와 함께 목적마다 설명 카드를 보여 주고 적용할 목적을 고르게 한다. 그다음 고른 목적 안에서 부작용이 있는 단계마다 다시 확인받는다. 설명 카드는 처음 보는 사람도 이해할 수 있게 쓰되 실무적인 깊이를 갖춘다(3.2.2) |
 | 18 | 변경 전달 | 작업 트리에 추적 파일의 변경이 있으면 시작하지 않는다. 기본 브랜치의 최신 상태에서 `repo-setup/<YYYY-MM-DD>` 브랜치를 만들어 목적마다 커밋하고, PR 하나로 올린다. main 에는 직접 커밋하지 않는다. GitHub 설정은 확인을 받은 뒤 API 로 바꾸고, 룰셋은 세팅 PR 이 병합된 뒤에 건다(3.2.3) |
 | 19 | 필수 검사 선택 | 실제 실행에서 읽은 check 를 모두 보여 주고, 각각이 어느 워크플로의 것인지와 그 워크플로에 `paths`·`paths-ignore`·`branches` 필터나 job `if` 조건이 있는지를 표시한다. 필터나 조건이 있는 check 는 기본으로 빼 두고, 사람이 필수로 둘 것을 고른다. 걸기 전에 열린 PR 가운데 멈출 PR 과, PR 없이 main 에 들어온 최근 커밋을 보고한다 |
@@ -48,6 +48,8 @@
 | 21 | 설계 근거의 자리 | `docs/decisions.md` 를 결정 하나에 파일 하나인 ADR(`docs/adr/`)로 나눈다(3.10). 실행 규칙(선택 조건, 순서)은 `SKILL.md` 한 곳에만 두고, ADR 에는 "왜"만 둔다. `docs/decisions.md` 는 ② 에서 지운다 |
 | 22 | 구현된 기능의 설명 | `docs/wiki/` 에 기능마다 페이지를 두고, 지금 구현된 것이 무엇을 하고 어떻게 동작하며 무엇을 바꾸고 어디까지 못 하는지 적는다. 이유는 쓰지 않고 해당 ADR 을 링크한다. 세팅 중에 사용자에게 보이는 카드 문구는 `PROCEDURE.md` 가 정본이고, wiki 는 그것을 옮겨 적지 않고 링크한다(3.11) |
 | 23 | README | 무엇인지, 설치, 첫 실행, 목적 다섯의 한 줄 요약, wiki 로 가는 링크만 남기고 100줄 안팎으로 줄인다. 기능의 세부는 wiki 에만 둔다. 존댓말(합니다체)로 쓴다. 모든 저장소의 README 에 적용하는 전역 규칙이다(2026-09-22 사용자 지시). wiki, ADR, SPEC.md, CLAUDE.md, 스킬 본문은 지금처럼 '~한다' 체로 둔다 |
+| 24 | 가드를 켜는 방식 | 켜는 층을 둘로 둔다. **(1) PR 검사:** 모든 대상 저장소에 PR 과 main 푸시마다 가드를 돌리는 워크플로를 두고, 룰셋의 필수 검사 후보로 올린다. 누구도 설치하지 않아도 병합 전에 잡힌다. 다만 푸시한 뒤에 돌기 때문에 공개 저장소에서는 "새는 것을 막지" 못하고 "새었다고 알릴" 뿐이며, 개인 패턴 파일은 CI 에 없어 내장 홈 경로와 팀 패턴만 본다. **(2) 로컬 훅:** 저장소가 이미 쓰는 도구에 얹는다. husky, pre-commit 프레임워크, lefthook 중 하나가 있으면 그 설정에 가드를 등록한다. 없고 `package.json` 이 있으면 husky 를 더한다(`"prepare": "husky"`, 팀원은 `npm install` 만). 어느 것도 없으면 설정 스크립트 `script/setup` 을 둔다. 컴퓨터당 한 번 켜는 방식(git 템플릿 폴더)은 쓰지 않는다(2026-09-22 사용자 결정) |
+| 25 | 설정 스크립트의 이름 | `setup.sh` 를 `script/setup` 으로 옮긴다. GitHub 의 "Scripts To Rule Them All" 관례에서 `script/setup` 은 처음 클론한 뒤에 실행하는 스크립트다(6절의 출처 16). 이름을 바꾸는 일은 기계적 변경이므로 파일을 옮기기만 하는 ③ 에 넣는다 |
 
 ## 3. 목표 구조와 인터페이스
 
@@ -61,7 +63,8 @@ plugin/skills/repo-setup/
     templates/pre-commit      → 대상 .githooks/pre-commit
     templates/commit-msg      → 대상 .githooks/commit-msg      (⑥)
     templates/lib/guard.sh    → 대상 .githooks/lib/guard.sh    (⑥, 두 훅이 source)
-    templates/setup.sh        → 대상 저장소 루트 setup.sh
+    templates/setup           → 대상 script/setup      (③ 에서 setup.sh 를 옮긴다)
+    templates/guard-workflow.yml → 대상 .github/workflows/guard.yml  (⑧)
   license/
     PROCEDURE.md
     scripts/check-license.sh
@@ -87,7 +90,7 @@ plugin/skills/repo-setup/
 
 - `templates/` 는 대상 저장소로 **복사하는** 파일이고, `scripts/` 는 스킬 폴더에서 **그대로 실행하는** 파일이다. 지금은 둘이 한 폴더에 섞여 있어서 리뷰가 "스크립트를 저장소 루트에서 `bash templates/x.sh` 로 돌리라"는 틀린 안내를 찾아냈다.
 - 스크립트는 **대상 저장소의 루트를 현재 폴더로 두고** 실행한다. 절차 문서에는 `<목적>/scripts/x.sh` 처럼 스킬 폴더 기준 상대 경로로 적는다. 스킬 폴더가 어디인지는 진입점 SKILL.md 가 처음에 한 번 알려 준다("이 SKILL.md 가 있는 폴더").
-- 이 저장소 루트의 `.githooks/pre-commit`, `.githooks/commit-msg`, `.githooks/lib/guard.sh`, `setup.sh` 는 `privacy/templates/` 의 사본으로 둔다. invariants 가 일치를 본다.
+- 이 저장소 루트의 `.githooks/pre-commit`, `.githooks/commit-msg`, `.githooks/lib/guard.sh`, `script/setup` 은 `privacy/templates/` 의 사본으로 둔다. invariants 가 일치를 본다.
 
 ### 3.2 진입점 `SKILL.md`
 
@@ -172,7 +175,7 @@ main 보호 (룰셋)
      - 리뷰 요청이 누구에게 가는지(`CODEOWNERS` 가 있으면 바뀌는 파일에 걸리는 소유자)
      - 이 PR 에서 도는 워크플로(`pull_request` 트리거를 가진 파일 목록)
      - 비공개 저장소라면 조직의 Actions 사용량을 쓴다는 사실
-     - 병합된 뒤 팀원마다 `./setup.sh` 를 한 번 돌려야 가드가 켜진다는 사실(이 안내는 PR 본문에도 넣는다)
+     - 병합된 뒤 팀원마다 가드를 켜는 명령(Node 저장소는 `npm install`, 그 밖에는 `script/setup`)을 한 번 돌려야 로컬 가드가 켜진다는 사실(이 안내는 PR 본문에도 넣는다)
    - **푸시할 수 없을 때는 제안으로 물러난다.** 포크해서 올리는 방식은 쓰지 않는다.
      - 내 권한(`viewerPermission`)이 `READ` 나 `TRIAGE` 면 푸시를 시도하지 않는다.
      - 푸시가 거절되면(브랜치 이름 규칙, 서명된 커밋 필수, 푸시 제한 같은 조직 정책) 거절 메시지를 그대로 보고한다.
@@ -192,9 +195,25 @@ main 보호 (룰셋)
   - `.githooks/commit-msg "$1"` 은 메시지 파일에서 `#` 로 시작하는 줄을 빼고, pre-commit 과 같은 패턴(내장 패턴과 세 출처)으로 검사한다.
   - 패턴 적재와 검증 코드는 `.githooks/lib/guard.sh` 한 곳에 두고 두 훅이 `source` 한다.
   - 공존 한 줄: `"$(git rev-parse --show-toplevel)"/.githooks/commit-msg "$1" || exit 1`
-  - `./setup.sh --verify` 는 임시 메시지 파일로 commit-msg 도 탐침한다. 두 훅이 모두 막아야 통과다.
-- **⑦ 실행 비트**: `setup.sh` 는 git 이 아는 훅 이름(`pre-commit`, `commit-msg` 등 githooks(5) 의 목록)에만 실행 비트를 채우고 그것만 센다. `team-patterns` 와 `lib/` 는 건드리지 않는다.
-- privacy 카드의 「켠 뒤 겪는 일」에는 다음을 적는다. 동료도 클론마다 `./setup.sh` 를 한 번 돌려야 하고, 돌리지 않은 기계에서는 가드가 꺼져 있다. 이미 커밋된 이력은 검사하지 않는다. commitlint 처럼 commit-msg 를 쓰는 도구가 있으면 공존 한 줄이 필요하다.
+  - `script/setup --verify` 는 임시 메시지 파일로 commit-msg 도 탐침한다. 두 훅이 모두 막아야 통과다.
+- **⑦ 실행 비트**: `script/setup` 은 git 이 아는 훅 이름(`pre-commit`, `commit-msg` 등 githooks(5) 의 목록)에만 실행 비트를 채우고 그것만 센다. `team-patterns` 와 `lib/` 는 건드리지 않는다.
+- **⑧ PR 검사(CI 가드)**
+  - `templates/guard-workflow.yml` 을 대상 `.github/workflows/guard.yml` 로 놓는다. 트리거는 `pull_request` 와 기본 브랜치 푸시이고, 필터(`paths`)를 두지 않는다. 필수 검사 후보가 되기 때문이다. 권한은 `contents: read` 만 준다.
+  - 워크플로는 저장소에 커밋된 `.githooks/lib/guard.sh` 를 **범위 모드**로 부른다. 로컬 훅이 인덱스(스테이징된 내용)를 보는 것과 달리, 범위 모드는 PR 의 기준 커밋과 머리 커밋 사이(`git diff <base>...<head>` 의 추가된 줄과 `git log <base>..<head>` 의 커밋 메시지)를 본다. 같은 검사 코드를 두 모드가 함께 쓴다.
+  - CI 에는 개인 패턴 파일(`~/.config/git-guard/patterns`, `.private/guard-patterns`)이 없으므로 내장 홈 경로와 `.githooks/team-patterns` 만 검사한다. 이 한계는 privacy 카드와 wiki 에 적는다.
+  - 실패하면 어느 커밋의 어느 파일, 몇 번째 줄인지를 출력한다. 로컬 훅과 같이 패턴 값은 출력하지 않는다.
+  - 카드의 「켠 뒤 겪는 일」: "푸시한 뒤에 돈다. 공개 저장소라면 이 검사가 실패한 시점에 그 커밋은 이미 공개돼 있다. 되돌리려면 이력을 다시 써야 하고, 이미 받아 간 사람이 있으면 회수할 수 없다."
+- **⑨ 로컬 훅을 켜는 방식**
+  - 순서대로 본다. 첫 번째로 해당하는 것 하나만 쓴다.
+    1. husky 를 쓰고 있으면(`.husky/` 가 있거나 `core.hooksPath` 가 `.husky/_`) `.husky/pre-commit` 과 `.husky/commit-msg` 에 가드를 부르는 줄을 더한다.
+    2. pre-commit 프레임워크를 쓰고 있으면(`.pre-commit-config.yaml`) `repo: local` 훅 둘(pre-commit 단계, commit-msg 단계)로 등록한다. commit-msg 단계가 설치되도록 `default_install_hook_types` 를 확인한다.
+    3. lefthook 을 쓰고 있으면(`lefthook.yml` 등) `pre-commit` 과 `commit-msg` 에 명령을 더한다.
+    4. 셋 다 없고 `package.json` 이 있으면 husky 를 더한다. 그 저장소의 패키지 매니저(잠금 파일로 판별: `package-lock.json`→npm, `pnpm-lock.yaml`→pnpm, `yarn.lock`→yarn)로 devDependency 에 설치하고, `"prepare": "husky"` 를 두고, `.husky/pre-commit` 과 `.husky/commit-msg` 가 가드를 부르게 한다. 잠금 파일은 손으로 고치지 않고 패키지 매니저가 다시 만든다. 이미 다른 `prepare` 가 있으면 뒤에 이어 붙인다.
+    5. 그 밖에는 `script/setup` 을 둔다(지금 방식).
+  - 어느 방식이든 가드 본체는 `.githooks/pre-commit`, `.githooks/commit-msg`, `.githooks/lib/guard.sh` 다. 도구들은 이 파일을 부르기만 한다.
+  - 1~4 에서는 `script/setup` 을 대상 저장소에 놓지 않는다. 증명은 스킬 폴더의 `privacy/templates/setup --verify` 를 **대상 저장소 루트에서** 실행해 한다. 이 명령은 git 이 실제로 부를 훅을 찾아 돌리므로, husky 같은 도구를 거쳐서도 동작한다.
+  - 1~4 는 팀의 설정 파일(`package.json`, `.pre-commit-config.yaml`, `lefthook.yml`, `.husky/*`)을 고치므로, 3.2.1 의 확인 흐름에 따라 diff 를 보여 주고 따로 확인받는다.
+- privacy 카드의 「켠 뒤 겪는 일」에는 다음을 적는다. 동료도 클론마다 가드를 켜는 명령을 한 번 돌려야 하고(Node 저장소는 `npm install` 이 대신한다), 켜지 않은 기계의 커밋은 푸시한 뒤에 PR 검사(⑧)에서야 잡힌다. 이미 커밋된 이력은 검사하지 않는다. commitlint 처럼 commit-msg 를 쓰는 도구가 있으면 공존 한 줄이 필요하다.
 
 ### 3.4 license
 
@@ -309,7 +328,7 @@ main 보호 (룰셋)
   - 트리거는 `pull_request` 와 main 푸시이고, matrix 는 `ubuntu-latest` 와 `macos-latest` 다.
   - `concurrency` 는 `cancel-in-progress: true` 이고, `permissions` 는 `contents: read` 이며, 액션은 SHA 로 고정한다.
   - 단계는 checkout, shellcheck 준비(러너별 설치 방법은 7절에서 확인), `.check.toml` 의 `test_command`, CLAUDE.md 의 shellcheck 명령 순서다.
-- ⑧ 뒤: 자체 CI 에 zizmor job 을 더한다. 대상은 이 저장소의 `.github/workflows/` 다.
+- ⑩ 뒤: 자체 CI 에 zizmor job 을 더한다. 대상은 이 저장소의 `.github/workflows/` 다.
 - ③: `tests/invariants.sh` 를 새 구조에 맞춘다.
   - 스킬 수는 1이다.
   - 진입점 표의 목적 이름 집합이 목적 폴더 집합과 같아야 한다.
@@ -352,13 +371,14 @@ main 보호 (룰셋)
 |---|---|---|---|
 | 0006 | 스킬 하나에 목적별 폴더를 둔다(0002 를 대체) | ③ | 1 |
 | 0007 | 설명 카드로 두 번 확인받고 변경은 브랜치와 PR 로 올린다 | ④ | 17, 18 |
-| 0008 | 판정은 검증된 도구와 GitHub API 에 맡기고 가드만 bash 와 git 으로 둔다 | ⑧·⑨·⑩ 중 먼저 병합되는 것 | 2, 3, 6, 7, 8, 20 |
-| 0009 | GitHub 설정은 계획을 먼저 보이고 --apply 로만 바꾼다 | ⑧ | 9 |
-| 0010 | main 보호는 룰셋으로 하고 필수 검사는 사람이 고른다 | ⑪ | 4, 5, 19 |
+| 0008 | 판정은 검증된 도구와 GitHub API 에 맡기고 가드만 bash 와 git 으로 둔다 | ⑩·⑪·⑫ 중 먼저 병합되는 것 | 2, 3, 6, 7, 8, 20 |
+| 0009 | GitHub 설정은 계획을 먼저 보이고 --apply 로만 바꾼다 | ⑩ | 9 |
+| 0010 | main 보호는 룰셋으로 하고 필수 검사는 사람이 고른다 | ⑬ | 4, 5, 19 |
 | 0011 | 팀 저장소에도 파일 변경은 확인 후 PR 로 올리고, 푸시할 수 없으면 패치로 물러난다(0005 를 일부 고침) | ④ | 18(3.2.3 의 6) |
+| 0012 | 가드는 PR 검사로 모두에게 걸고, 로컬 훅은 저장소가 이미 쓰는 도구에 얹는다 | ⑧ | 24, 25 |
 
   - 0011 이 0005 를 고치는 방식: 0005 의 상태는 `승인` 으로 두고, 0011 의 맥락에서 0005 를 가리키며 "파일 변경은 PR 로 올려도 되고, GitHub 설정은 여전히 제안만 한다"고 좁힌다.
-  - 나머지 결정(10~16)은 코드와 테스트, CLAUDE.md, 매니페스트에 이미 드러나므로 ADR 로 옮기지 않는다. ⑫ 에서 이 판정을 다시 확인한다.
+  - 나머지 결정(10~16)은 코드와 테스트, CLAUDE.md, 매니페스트에 이미 드러나므로 ADR 로 옮기지 않는다. ⑭ 에서 이 판정을 다시 확인한다.
 
 ### 3.11 wiki 와 README (결정 22, 23)
 
@@ -390,7 +410,7 @@ main 보호 (룰셋)
   - wiki 페이지에 백틱으로 적힌 저장소 경로(`plugin/`, `tests/`, `docs/`, `.githooks/` 로 시작하는 것)가 실제로 있다.
   - wiki 페이지가 가리키는 ADR 번호의 파일이 `docs/adr/` 에 있다.
   - `docs/adr/README.md` 가 모든 ADR 을 가리킨다.
-- **README.** 목표는 100줄 안팎이고, 존댓말(합니다체)로 새로 쓴다. 지금 README 의 스킬별 절은 ② 에서 해당 wiki 페이지로 **옮기기만** 한다. 옮기면서 내용을 고치지 않는다. 낡은 문장(예: "Skills (2)")은 README 에 남는 부분이면 ② 에서 고치고, wiki 로 옮긴 부분이면 그 기능의 PR 이나 ⑫ 에서 고친다.
+- **README.** 목표는 100줄 안팎이고, 존댓말(합니다체)로 새로 쓴다. 지금 README 의 스킬별 절은 ② 에서 해당 wiki 페이지로 **옮기기만** 한다. 옮기면서 내용을 고치지 않는다. 낡은 문장(예: "Skills (2)")은 README 에 남는 부분이면 ② 에서 고치고, wiki 로 옮긴 부분이면 그 기능의 PR 이나 ⑭ 에서 고친다.
 
 ## 4. PR 순서
 
@@ -398,21 +418,27 @@ main 보호 (룰셋)
 |---|---|---|---|---|
 | ① | `ci: 테스트와 shellcheck 를 ubuntu 와 macOS 에서 돌린다` | 없음(`ci` 에 맞는 라벨이 없다. PR 본문에 적는다) | 없음 | 두 러너에서 초록. 이 스펙 문서 포함 |
 | ② | `docs: 문서를 README·wiki·ADR 로 나눈다` | `documentation` | 없음 | 3.10 의 ADR 0001~0005 와 `docs/adr/README.md`. 3.11 의 `docs/wiki/` 페이지와 목차. README 를 100줄 안팎으로 줄임. `docs/decisions.md` 삭제. `CLAUDE.md:6` 이 `docs/wiki/` 와 `docs/adr/` 를 가리키게 고침. `repo-setup/SKILL.md:92` 의 `docs/decisions.md` 참조 삭제. invariants 의 wiki·ADR 검사. 내용을 새로 쓰지 않고 옮기기만 한다 |
-| ③ | `refactor(skill)!: 좁은 스킬 다섯을 repo-setup 의 목적별 폴더로 합친다` | `breaking`(새로 만든다) | PR #1, ①, ② | 동작 변화 없이 파일 이동, frontmatter, 진입점, invariants, 문서, 0.2.0. ADR 0006. wiki 페이지의 관련 파일 경로 갱신. 기계적 이동과 내용 변경을 섞지 않는다 |
+| ③ | `refactor(skill)!: 좁은 스킬 다섯을 repo-setup 의 목적별 폴더로 합친다` | `breaking`(새로 만든다) | PR #1, ①, ② | 동작 변화 없이 파일 이동, frontmatter, 진입점, invariants, 문서, 0.2.0. `setup.sh` 를 `script/setup` 으로 옮김(이 저장소의 사본 포함, 이전 판 사용자에게 옮기는 안내). ADR 0006. wiki 페이지의 관련 파일 경로 갱신. 기계적 이동과 내용 변경을 섞지 않는다 |
 | ④ | `feat(setup): 목적마다 설명 카드로 확인받고 변경을 브랜치와 PR 로 올린다` | `enhancement` | ③ | 3.2 의 공통 실측 추가, 3.2.1~3.2.3. 다섯 PROCEDURE.md 에 「카드」 절(각 목적 PR 에서 내용을 다듬는다). ADR 0007, 0011 |
 | ⑤ | `fix(privacy): 추가된 줄만 검사하고 공용 계정 경로를 막지 않는다` | `bug` | ③ | 3.3 의 ⑤ |
 | ⑥ | `feat(privacy): 커밋 메시지도 가드가 검사한다` | `enhancement` | ③ | 3.3 의 ⑥ |
 | ⑦ | `fix(privacy): 훅이 아닌 파일에 실행 비트를 붙이지 않는다` | `bug` | ③ | 3.3 의 ⑦ |
-| ⑧ | `feat(secure)!: 워크플로 검사를 zizmor 로, CodeQL 을 default setup 으로 바꾼다` | `enhancement`, `breaking` | ④ | 3.6, 3.7. ADR 0009, 그리고 ⑧·⑨·⑩ 중 먼저 병합되면 0008 |
-| ⑨ | `fix(license): 알아보지 못한 본문에 이름을 붙이지 않는다` | `bug` | ③ | 3.4 |
-| ⑩ | `fix(ci): 테스트가 실제로 돈 것을 보고 워크플로를 놓는다` | `bug` | ④ | 3.5 |
-| ⑪ | `feat(contrib)!: 브랜치 보호를 룰셋으로 옮기고 골격 셋을 뺀다` | `enhancement`, `breaking` | ⑩ | 3.7, 3.8. ADR 0010 |
-| ⑫ | `docs: 구조 변경을 마무리하며 낡은 문서를 정리한다` | `documentation` | ①~⑪ 모두 | CLAUDE.md 의 테스트 건수와 낡은 문장(예: "repo-privacy 가 템플릿 둘을 본문에 품는다") 제거. 2절의 결정이 모두 wiki, ADR, 코드·테스트 중 한 곳으로 옮겨졌는지 표로 확인한 뒤 SPEC.md 삭제. wiki 페이지가 모두 지금 구현과 맞는지 확인 |
+| ⑧ | `feat(privacy): PR 마다 CI 에서 가드를 돌린다` | `enhancement` | ⑤, ⑥ | 3.3 의 ⑧. ADR 0012 |
+| ⑨ | `feat(privacy): 이미 쓰는 훅 도구에 가드를 얹고 Node 저장소에는 husky 를 더한다` | `enhancement` | ④, ⑧ | 3.3 의 ⑨ |
+| ⑩ | `feat(secure)!: 워크플로 검사를 zizmor 로, CodeQL 을 default setup 으로 바꾼다` | `enhancement`, `breaking` | ④ | 3.6, 3.7. ADR 0009, 그리고 ⑩·⑪·⑫ 중 먼저 병합되면 0008 |
+| ⑪ | `fix(license): 알아보지 못한 본문에 이름을 붙이지 않는다` | `bug` | ③ | 3.4 |
+| ⑫ | `fix(ci): 테스트가 실제로 돈 것을 보고 워크플로를 놓는다` | `bug` | ④ | 3.5 |
+| ⑬ | `feat(contrib)!: 브랜치 보호를 룰셋으로 옮기고 골격 셋을 뺀다` | `enhancement`, `breaking` | ⑧, ⑫ | 3.7, 3.8. ADR 0010 |
+| ⑭ | `docs: 구조 변경을 마무리하며 낡은 문서를 정리한다` | `documentation` | ①~⑬ 모두 | CLAUDE.md 의 테스트 건수와 낡은 문장(예: "repo-privacy 가 템플릿 둘을 본문에 품는다") 제거. 2절의 결정이 모두 wiki, ADR, 코드·테스트 중 한 곳으로 옮겨졌는지 표로 확인한 뒤 SPEC.md 삭제. wiki 페이지가 모두 지금 구현과 맞는지 확인 |
 
 - 모든 PR 은 저장소 규칙대로 **테스트를 먼저 쓰고 RED 를 확인한 뒤** 구현한다.
 - ③ 부터 기능을 바꾸는 PR 은 그 기능의 `docs/wiki/` 페이지를 같은 PR 에서 고친다(3.11). 표의 "ADR" 은 그 PR 이 더하는 ADR 이다.
 - PR 본문은 main 에 그대로 남을 글로 쓴다. 제목은 `type(scope): 요약` 이다.
-- ② 는 ③ 보다 먼저 병합한다. ③ 이 0002 를 대체하는 ADR 을 더하기 때문이다. ⑧·⑩ 은 ④ 뒤에 온다. 카드와 확인 흐름, 세팅 PR 에서 CI 를 돌리는 방식이 ④ 에서 정해지기 때문이다. ⑤·⑥·⑦·⑨ 는 ③ 뒤라면 서로 순서가 없다. ⑫ 는 맨 마지막이다.
+- ② 는 ③ 보다 먼저 병합한다. ③ 이 0002 를 대체하는 ADR 을 더하기 때문이다.
+- ⑨·⑩·⑫ 는 ④ 뒤에 온다. 카드와 확인 흐름, 세팅 PR 에서 CI 를 돌리는 방식이 ④ 에서 정해지기 때문이다.
+- ⑧ 은 ⑤·⑥ 뒤에 온다. CI 가 로컬 훅과 같은 검사(추가된 줄, 커밋 메시지)를 돌리기 때문이다. ⑨ 는 ⑧ 뒤에 온다. husky 를 더하는 카드가 "설치하지 않은 팀원은 PR 검사가 잡는다"를 전제로 하기 때문이다.
+- ⑬ 은 ⑧ 과 ⑫ 뒤에 온다. 필수 검사 후보에 가드 검사와 테스트 검사가 모두 있어야 하기 때문이다.
+- ⑤·⑥·⑦·⑪ 은 ③ 뒤라면 서로 순서가 없다. ⑭ 는 맨 마지막이다.
 
 ## 5. 범위 밖
 
@@ -426,6 +452,9 @@ main 보호 (룰셋)
 - Git Bash 가 아닌 Windows 네이티브 셸에서의 실행.
 - 실제 조직 저장소에서의 종단 검증. 이 계정에는 조직이 없다. 팀 저장소 판별과 "푸시할 수 없으면 패치로 물러난다"는 가짜 gh 테스트로 확인하고, 이 사실을 wiki 의 한계 절에 적는다.
 - 포크해서 PR 을 올리는 방식.
+- 컴퓨터당 한 번 켜는 방식(git 템플릿 폴더 `init.templateDir`). 2026-09-22 사용자 결정으로 쓰지 않는다.
+- CI 에서 개인 패턴을 검사하는 일(예: 패턴을 저장소 시크릿에 넣는 방식). CI 는 내장 홈 경로와 팀 패턴만 본다.
+- 훅 도구가 없는 저장소에 lefthook 이나 pre-commit 프레임워크를 새로 들이는 일. 이미 쓰는 저장소에 얹기만 한다.
 
 ## 6. 확인한 외부 사실
 
@@ -449,6 +478,11 @@ main 보호 (룰셋)
 12. **공식 문서**, Claude Code [Best practices](https://code.claude.com/docs/en/best-practices): 인터뷰 프롬프트 예시가 "write a complete spec to SPEC.md"(번역: 완전한 스펙을 SPEC.md 에 써라)로 끝나고, "Once the spec is complete, start a fresh session to execute it."(번역: 스펙이 완성되면 그것을 실행할 새 세션을 시작하라.)라고 적혀 있다. 스펙 파일을 끝난 뒤 어떻게 할지는 다루지 않는다. 그래서 결정 16 의 "끝나면 지운다"는 이 저장소가 정한 규칙이다.
 13. **공식 문서가 아닌 원전**, [Diátaxis](https://diataxis.fr/): "Diátaxis identifies four distinct needs, and four corresponding forms of documentation"(번역: Diátaxis 는 서로 다른 네 가지 필요와 그에 대응하는 네 가지 문서 형태를 구별한다). 네 형태는 tutorials(배우기 위한 문서), how-to guides(과제를 이루기 위한 문서), reference(찾아보기 위한 문서), explanation(이해를 깊게 하기 위한 문서)다.
 14. **공식 문서**, GitHub [Adding or editing wiki pages](https://docs.github.com/en/communities/documenting-your-project-with-wikis/adding-or-editing-wiki-pages): GitHub 의 Wiki 기능은 `git clone https://github.com/YOUR-USERNAME/YOUR-REPOSITORY.wiki.git` 으로 받는 별도 저장소이고, 기본 브랜치에 푸시한 변경이 바로 반영된다. PR 을 거친다는 설명은 없다. 그래서 설계 문서는 GitHub Wiki 가 아니라 저장소 안 `docs/wiki/` 에 둔다. 코드와 같은 PR 에서 리뷰되고, 작업 트리에서 일하는 에이전트와 invariants 가 볼 수 있어야 하기 때문이다.
+15. **공식 문서**, [husky How To](https://typicode.github.io/husky/how-to.html): `package.json` 에 `"prepare": "husky"` 를 두면 의존성을 설치한 뒤 자동으로 돌아 훅이 켜진다. 훅은 `.husky/` 폴더에 파일로 둔다. "To avoid installing Git Hooks on CI servers or in Docker, use `HUSKY=0`."(번역: CI 서버나 Docker 에서 git 훅을 설치하지 않으려면 `HUSKY=0` 을 쓴다.) `husky` 가 `core.hooksPath` 를 쓴다는 문장은 이 문서에서 찾지 못했다.
+16. **공개 저장소**, GitHub [Scripts To Rule Them All](https://github.com/github/scripts-to-rule-them-all): "Set of boilerplate scripts describing the normalized script pattern that GitHub uses in its projects."(번역: GitHub 이 자기 프로젝트에서 쓰는 표준화된 스크립트 패턴을 설명하는 기본 스크립트 모음.) `script/setup` 은 "Used to set up a project in an initial state. This is typically run after an initial clone"(번역: 프로젝트를 처음 상태로 세팅하는 데 쓴다. 보통 처음 클론한 뒤에 실행한다).
+17. **공식 문서**, [pre-commit](https://pre-commit.com/): 클론한 뒤 각자 `pre-commit install` 을 실행해야 하고, 이를 자동으로 하려면 `git config --global init.templateDir ~/.git-template` 와 `pre-commit init-templatedir ~/.git-template` 를 쓰라고 안내한다. 로컬 훅은 `repo: local` 로 정의하고 bash 스크립트의 `language` 는 `unsupported_script` 다. `default_install_hook_types: [pre-commit, commit-msg]` 나 `pre-commit install --hook-type commit-msg` 로 commit-msg 단계를 켠다.
+18. **공식 문서**, [lefthook](https://lefthook.dev/): 언어와 무관한 단일 실행 파일이고 npm, pip, gem, go, Homebrew 등으로 설치한다. `lefthook install` 이 "installs the configured hooks into `.git/hooks/`"(번역: 설정한 훅을 `.git/hooks/` 에 설치한다). npm 으로 설치할 때 `lefthook install` 이 자동으로 도는지는 이 문서에서 확인하지 못했다.
+19. **실측**, git 2.53.0 의 `man githooks` 와 `man git-init`: 훅은 `$GIT_DIR/hooks` 나 `core.hooksPath` 가 가리키는 폴더에서만 찾는다. `git init`(과 `git clone`)은 템플릿 폴더의 파일을 새 `$GIT_DIR` 로 복사하고, 템플릿 폴더는 `--template`, `$GIT_TEMPLATE_DIR`, `init.templateDir`, 기본 폴더 순으로 정해진다. "Running git init in an existing repository is safe. It will not overwrite things that are already there."(번역: 이미 있는 저장소에서 git init 을 실행해도 안전하다. 이미 있는 것을 덮어쓰지 않는다.) 설정만으로 훅을 거는 `hook.<이름>.command` 는 이 판의 `man git-config` 에서 찾지 못했다. 그래서 클론만으로 저장소 안의 훅이 켜지는 구성은 없고, 켜는 단계가 어딘가에 반드시 있다.
 
 ## 7. 구현 전에 확인할 것 (아직 확인하지 않음)
 
@@ -460,6 +494,10 @@ main 보호 (룰셋)
 - GitHub 라이선스 템플릿: 지원할 키마다의 자리표시자 목록(`[year]`, `[fullname]` 외).
 - macOS 러너와 ubuntu 러너에 shellcheck 가 미리 깔려 있는지, 없으면 설치 방법.
 - 이전 판에서 옮겨 오기: 플러그인으로 설치한 경우 업데이트할 때 옛 스킬이 사라지는지, `npx skills` 로 설치한 경우 옛 스킬 폴더를 지우는 명령.
+- husky: 지금 판의 설치 명령과 `.husky/` 훅 파일 형식, `husky` 가 `core.hooksPath` 를 쓰는지(공식 문서에서는 확인하지 못했고, 이 저장소 `setup.sh` 주석의 실측 기록만 있다), `HUSKY=0` 의 동작, git 저장소 밖에서 `npm install` 할 때의 동작.
+- pre-commit 프레임워크: `repo: local` 훅의 `language` 값(2026-09-22 문서에서는 `unsupported_script`), commit-msg 단계에 걸 때의 `stages` 값, 커밋할 때 스테이징하지 않은 변경을 잠시 치웠다 되돌리는 동작이 가드의 인덱스 검사와 부딪히지 않는지.
+- lefthook: 지금 판의 `lefthook.yml` 형식(문서 예시는 `jobs`), commit-msg 훅에 메시지 파일 경로를 넘기는 방법.
+- CI 가드: `pull_request` 이벤트에서 기준 커밋과 머리 커밋을 얻는 방법과 `actions/checkout` 의 `fetch-depth`, 포크에서 온 PR 에서의 동작, main 푸시에서 범위를 정하는 방법(`github.event.before`).
 
 확인하지 못한 항목은 스펙대로 구현하지 말고, 그 사실과 대안을 사용자에게 묻는다.
 
@@ -481,7 +519,7 @@ gh pr checks <PR 번호>
 
 ### 8.2 가드 (⑤⑥⑦ 뒤, 로컬 임시 저장소)
 
-`privacy/templates/` 의 파일을 새 임시 저장소에 복사하고 `./setup.sh` 를 돌린 뒤, 실제 `git commit` 으로 확인한다.
+`privacy/templates/` 의 파일을 새 임시 저장소에 복사하고 `script/setup` 를 돌린 뒤, 실제 `git commit` 으로 확인한다.
 
 | 경우 | 기대 |
 |---|---|
@@ -495,10 +533,10 @@ gh pr checks <PR 번호>
 
 그리고 다음을 확인한다.
 
-- `./setup.sh --verify` 는 `검증 통과` 와 exit 0 을 내야 하고, pre-commit 과 commit-msg 를 모두 탐침해야 한다.
-- `.githooks/team-patterns` 가 있는 저장소에서 `./setup.sh` 를 돌린 뒤 `git status --porcelain` 에 모드 변경이 없어야 한다.
+- `script/setup --verify` 는 `검증 통과` 와 exit 0 을 내야 하고, pre-commit 과 commit-msg 를 모두 탐침해야 한다.
+- `.githooks/team-patterns` 가 있는 저장소에서 `script/setup` 를 돌린 뒤 `git status --porcelain` 에 모드 변경이 없어야 한다.
 
-### 8.3 처음 세팅하는 경로 (⑪ 뒤, 공개 임시 저장소)
+### 8.3 처음 세팅하는 경로 (⑬ 뒤, 공개 임시 저장소)
 
 1. 사용자에게 확인받은 뒤 `gh repo create IsthisLee/repo-setup-e2e --public --clone` 을 실행한다. 저장소에는 pytest 테스트 하나를 가진 작은 파이썬 프로젝트만 두고, LICENSE 와 워크플로는 두지 않는다.
 2. 그 저장소에서 `/repo-setup` 을 인자 없이 돌린다.
@@ -511,7 +549,8 @@ gh pr checks <PR 번호>
 
 | 목적 | 명령 | 기대 |
 |---|---|---|
-| privacy | `./setup.sh --verify` | `검증 통과`, exit 0 |
+| privacy | `script/setup --verify` | `검증 통과`, exit 0 |
+| privacy(PR 검사) | 가짜 홈 경로(`/Users` 뒤에 `example` 을 실행할 때 조립)를 담은 커밋을 새 브랜치에 푸시하고 PR 을 연다 | `guard.yml` 이 실패하고, 출력에 파일과 줄 번호가 나오며 패턴 값은 나오지 않는다. 그 PR 은 닫고 브랜치를 지운다 |
 | license | `check-license.sh --expect mit --year 2026 --holder <이름>` | exit 0. 병합한 뒤 `gh api repos/IsthisLee/repo-setup-e2e/license --jq .license.spdx_id` → `MIT` |
 | ci | `wait-run.sh tests.yml "$(git rev-parse HEAD)"` | 세팅 PR 의 실행에서 exit 0. `check-test-run.sh` 가 1 이상 |
 | secure | `gh api repos/IsthisLee/repo-setup-e2e --jq '.security_and_analysis \| .secret_scanning.status, .secret_scanning_push_protection.status'` | `enabled` 두 줄 |
@@ -528,7 +567,7 @@ gh pr checks <PR 번호>
 | 빈 커밋을 main 으로 직접 `git push` | 거절. 거절 메시지를 기록해 3.2.2 예시 카드의 문구를 바꾼다 |
 | 같은 커밋을 PR 로 올림 | 필수 검사가 이름대로 나타나고, 통과한 뒤 병합 가능 |
 
-### 8.4 활발한 저장소를 흉내 낸 경로 (⑪ 뒤, 공개 임시 저장소)
+### 8.4 활발한 저장소를 흉내 낸 경로 (⑬ 뒤, 공개 임시 저장소)
 
 1. 사용자에게 확인받은 뒤 `gh repo create IsthisLee/repo-setup-e2e-active --public --clone` 을 실행하고 다음을 미리 만든다.
    - 테스트가 있는 프로젝트, MIT LICENSE
@@ -548,7 +587,7 @@ gh pr checks <PR 번호>
 
 3. 두 임시 저장소는 사람이 `gh auth refresh -s delete_repo` 를 직접 실행한 뒤, 삭제 직전에 다시 확인받고 `gh repo delete <저장소> --yes` 로 지운다.
 
-### 8.5 이미 도구가 있는 실제 저장소 (⑪ 뒤, 이 저장소)
+### 8.5 이미 도구가 있는 실제 저장소 (⑬ 뒤, 이 저장소)
 
 이 저장소에서 `/repo-setup` 을 돌린다. 확인 흐름은 8.3 과 같다.
 
@@ -556,11 +595,24 @@ gh pr checks <PR 번호>
 |---|---|
 | `check-license.sh`(인자 없음) | exit 0, MIT. LICENSE 를 다시 쓰지 않음 |
 | `.github/workflows/test.yml` | 내용이 그대로이고 tests.yml 을 새로 만들지 않음 |
-| `./setup.sh` | 이미 걸린 `.githooks` 를 멱등으로 통과 |
+| `script/setup` | 이미 걸린 `.githooks` 를 멱등으로 통과 |
 | `secret-scanning.sh`, `code-scanning.sh` | 적용 뒤 되읽기 일치, exit 0 |
 | `ruleset.sh --list --commit <main 의 최신 SHA>` 와 적용 | ubuntu 와 macOS 두 check 가 필수 후보로 나오고, 고른 뒤 `gh api repos/IsthisLee/repo-setup/rules/branches/main` 에 네 규칙이 있음 |
 
 이 저장소에서는 main 으로 직접 푸시해 보는 시험을 하지 않는다. 설정이 틀렸다면 그 커밋이 main 에 남기 때문이다. 되읽기로만 확인한다.
+
+### 8.6 로컬 훅을 켜는 방식 (⑨ 뒤, 로컬 임시 저장소)
+
+GitHub 없이 로컬 임시 저장소 넷을 만들어 privacy 만 돌린다(`/repo-setup privacy`). npm 이 있어야 한다.
+
+| 저장소 | 기대 |
+|---|---|
+| `package.json` 만 있고 훅 도구 없음 | husky 가 devDependency 로 들어가고 잠금 파일은 npm 이 다시 만든다. `package.json` 에 `"prepare": "husky"`. 새로 클론해 `npm install` 만 하고 홈 경로가 든 커밋을 시도하면 차단된다. `script/setup` 은 놓이지 않는다 |
+| 이미 husky 를 씀(`.husky/pre-commit` 에 `npm test`) | 기존 줄은 그대로 두고 가드를 부르는 줄만 더해진다. 차단 시험이 통과한다 |
+| 이미 pre-commit 프레임워크를 씀 | `.pre-commit-config.yaml` 에 `repo: local` 훅 둘이 더해진다. `pre-commit install` 뒤 차단 시험이 통과한다(pre-commit 이 설치돼 있을 때만. 없으면 이 줄은 건너뛰고 그 사실을 기록한다) |
+| 아무것도 없음 | `script/setup` 이 놓이고, 실행한 뒤 차단 시험이 통과한다 |
+
+네 경우 모두 스킬 폴더의 `privacy/templates/setup --verify` 를 대상 저장소 루트에서 돌려 `검증 통과` 와 exit 0 이 나와야 한다. 같은 저장소에서 `HUSKY=0 npm install` 을 하면 훅이 설치되지 않는 것도 확인한다(공식 문서의 동작).
 
 ## 9. 진행 상황
 
@@ -568,4 +620,4 @@ gh pr checks <PR 번호>
 |---|---|---|
 | PR #1 | 열림, 병합 대기 | https://github.com/IsthisLee/repo-setup/pull/1 |
 | ① | 대기 | |
-| ② ~ ⑫ | 대기 | |
+| ② ~ ⑭ | 대기 | |
