@@ -9,7 +9,8 @@
 
 - `tests/guard/unit.sh` — 훅 27건. 패턴 출처 셋이 합쳐지는지, 팀 패턴 파일이 자기 자신을 막지 않는지,
   한글·공백 이름과 스테이징한 뒤 지운 파일도 검사하는지, 읽지 못하는 패턴이 가드를 끄지 않는지 본다.
-- `tests/setup/unit.sh` — 활성화 스크립트 27건. 남이 잡은 `core.hooksPath` 와 `.git/hooks` 의 훅을 덮지 않는지 본다.
+- `tests/setup/unit.sh` — 활성화 스크립트 37건. 남이 잡은 `core.hooksPath` 와 `.git/hooks` 의 훅을 덮지 않는지,
+  `--verify` 가 커밋을 만들지 않고 가드가 막는지를 가려내는지 본다.
 - `tests/license/unit.sh` — 라이선스 대조기 24건. 알아보지 못한 본문에 이름을 붙이지 않는지 본다.
 - `tests/contrib/unit.sh` — 협업 파일 검사기와 골격 다섯 25건. GitHub 이 보는 자리를 모두
   훑는지, 빈 ISSUE_TEMPLATE 폴더를 있는 것으로 보지 않는지 본다.
@@ -19,7 +20,7 @@
   테스트로 보지 않는지, 골격이 쓰기 권한을 주지 않는지 본다.
 - `tests/invariants.sh` — 매니페스트, 폴더명과 `name` 일치, 스킬 수, `repo-setup` 의 스킬 표 대조,
   템플릿 인용 대조, `npx skills` 탐색 경로, `description` 병기, 자리표시자 폴백, 부모 경로 참조,
-  매니페스트 description 대조, 실행 비트, 사본 일치, 홈 경로 18건.  **합계 167건.**
+  매니페스트 description 대조, 실행 비트, 사본 일치, 홈 경로 18건.  **합계 177건.**
 - `shellcheck -x -s bash plugin/skills/*/templates/*.sh setup.sh .githooks/* tests/*.sh tests/*/*.sh`
 
 ## 규칙

@@ -14,6 +14,7 @@
 #   ./setup.sh                  훅을 켠다
 #   ./setup.sh --init-patterns  공용 개인 패턴 파일의 견본을 만든다(없을 때만)
 #   ./setup.sh --force          이미 다른 훅이 있어도 덮어쓴다
+#   ./setup.sh --verify         가드가 실제로 막는지 확인한다(커밋을 만들지 않고 설정도 바꾸지 않는다)
 set -u
 
 HOOKS_DIR=.githooks
@@ -21,12 +22,59 @@ GLOBAL_PATTERNS="${GIT_GUARD_PATTERNS:-${XDG_CONFIG_HOME:-${HOME:-}/.config}/git
 
 die() { printf '%s\n' "setup: $1" >&2; exit 1; }
 
+# 가드가 실제로 막는지 커밋을 만들지 않고 증명한다. 임시 인덱스에 HEAD 와 탐침 파일 하나만
+# 올리고, git 이 커밋할 때 부를 pre-commit 을 그 인덱스로 돌린다. 사용자의 인덱스·작업 트리·
+# 히스토리는 그대로이고, 남는 것은 참조되지 않는 blob 하나다(git gc 가 치운다). 탐침은 훅에
+# 박힌 홈 경로 패턴에 걸리는 값이라 패턴 파일이 없어도 막혀야 한다. 판정은 훅의 차단 문구에
+# 기대므로, 그 문구를 바꾸면 tests/setup/unit.sh 가 잡는다.
+verify_tmp=""
+trap 'rm -rf "$verify_tmp"' EXIT
+verify_guard() {
+  local hook blob out rc
+  hook="$(git rev-parse --git-path hooks)/pre-commit"
+  if [ ! -f "$hook" ] || [ ! -x "$hook" ]; then
+    printf '%s\n' "검증 실패: git 이 돌릴 pre-commit 이 없거나 실행 비트가 없다: ${hook}" >&2
+    printf '%s\n' "  ./setup.sh 로 켜거나, 다른 훅과 공존한다면 그 훅이 ${HOOKS_DIR}/pre-commit 을 부르게 해라." >&2
+    return 1
+  fi
+  verify_tmp=$(mktemp -d) || die "임시 폴더를 만들지 못했다."
+  if git rev-parse -q --verify HEAD >/dev/null; then
+    GIT_INDEX_FILE="$verify_tmp/index" git read-tree HEAD || die "임시 인덱스를 만들지 못했다."
+  else
+    GIT_INDEX_FILE="$verify_tmp/index" git read-tree --empty || die "임시 인덱스를 만들지 못했다."
+  fi
+  # 소스에 홈 경로를 통째로 적으면 이 파일 자신이 가드에 걸린다. 실행할 때 조립한다.
+  blob=$(printf '%s\n' "/Users""/guard-probe/x" | git hash-object -w --stdin) || die "탐침을 만들지 못했다."
+  GIT_INDEX_FILE="$verify_tmp/index" git update-index --add --cacheinfo "100644,${blob},guard-probe.txt" \
+    || die "탐침을 임시 인덱스에 올리지 못했다."
+  out=$(GIT_INDEX_FILE="$verify_tmp/index" "$hook" < /dev/null 2>&1); rc=$?
+  if [ "$rc" -eq 0 ]; then
+    printf '%s\n' "검증 실패: 가드가 탐침을 막지 않았다(훅: ${hook})." >&2
+    printf '%s\n' "  그 훅이 ${HOOKS_DIR}/pre-commit 을 부르는지, 가드가 꺼져 있지 않은지 확인해라." >&2
+    return 1
+  fi
+  case "$out" in
+    *"패턴을 읽지 못한다"*)
+      printf '%s\n' "검증 실패: 패턴 파일에 읽지 못하는 줄이 있어 모든 커밋이 막힌다. 파일과 줄 번호:" >&2
+      printf '%s\n' "$out" | grep '패턴을 읽지 못한다' | sed 's/^/    /' >&2
+      return 1;;
+    *"개인 식별 정보가 있다: guard-probe.txt"*)
+      printf '%s\n' "검증 통과: 탐침이 막혔다(훅: ${hook}). 커밋은 만들지 않았다."
+      return 0;;
+  esac
+  printf '%s\n' "검증 실패: 막혔지만 가드가 막은 것이 아니다(훅: ${hook}). 훅 출력:" >&2
+  printf '%s\n' "$out" | sed 's/^/    /' >&2
+  return 1
+}
+
 init_patterns=0
 force=0
+verify=0
 for arg in "$@"; do
   case "$arg" in
     --init-patterns) init_patterns=1;;
     --force) force=1;;
+    --verify) verify=1;;
     -h|--help) awk 'NR>1 { if ($0 !~ /^#/) exit; sub(/^# ?/, ""); print }' "$0"; exit 0;;
     *) die "모르는 인자: ${arg}";;
   esac
@@ -34,6 +82,11 @@ done
 
 root=$(git rev-parse --show-toplevel 2>/dev/null) || die "git 저장소 안에서 실행해라."
 cd "$root" || die "저장소 루트로 이동하지 못했다: ${root}"
+
+if [ "$verify" -eq 1 ]; then
+  verify_guard
+  exit $?
+fi
 
 [ -d "$HOOKS_DIR" ] || die "${HOOKS_DIR}/ 가 없다. 훅 폴더를 먼저 두어라."
 

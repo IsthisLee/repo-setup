@@ -154,6 +154,7 @@ husky 처럼 `core.hooksPath` 를 잡은 관리자가 있거나 `.git/hooks` 에
 ### 손으로 깔기
 
 `plugin/skills/repo-privacy/templates/` 의 두 파일을 대상 저장소에 복사하고 `./setup.sh` 를 돌린다.
+그다음 `./setup.sh --verify` 로 실제로 막히는지 확인한다. 이 명령은 커밋을 만들지 않고 설정도 바꾸지 않는다.
 
 ### 한계
 
