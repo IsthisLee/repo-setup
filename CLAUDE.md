@@ -3,7 +3,7 @@
 용도에 맞게 git 저장소를 세팅하는 커맨드 모음이다. 진입점 `repo-setup` 하나가 실측해 해당하는 것만 고르고 좁은 스킬을 부른다.
 좁은 스킬은 `repo-privacy`(개인 정보 가드), `repo-license`(라이선스), `repo-ci`(테스트 워크플로),
 `repo-secure`(호스트 보안 층), `repo-contrib`(협업 준비) 다섯이다.
-무엇을 더 만들지와 각 스킬의 경계는 `docs/decisions.md` 에 있다.
+구현된 기능의 설명은 `docs/wiki/` 에, 각 스킬의 경계와 설계 결정의 이유는 `docs/adr/` 에 있다.
 
 ## 검사 명령
 
@@ -20,7 +20,8 @@
   테스트로 보지 않는지, 골격이 쓰기 권한을 주지 않는지 본다.
 - `tests/invariants.sh` — 매니페스트, 폴더명과 `name` 일치, 스킬 수, `repo-setup` 의 스킬 표 대조,
   템플릿 인용 대조, `npx skills` 탐색 경로, `description` 병기, 자리표시자 폴백, 부모 경로 참조,
-  매니페스트 description 대조, 실행 비트, 사본 일치, 홈 경로 18건.  **합계 177건.**
+  매니페스트 description 대조, 실행 비트, 사본 일치, wiki 페이지와 목차, wiki 의 경로와 ADR 링크,
+  ADR 목록, 홈 경로 22건.  **합계 181건.**
 - `shellcheck -x -s bash plugin/skills/*/templates/*.sh setup.sh .githooks/* tests/*.sh tests/*/*.sh`
 - `.github/workflows/test.yml` 이 PR 과 main 푸시마다 위 테스트와 shellcheck 를 ubuntu 와 macOS 에서
   돌린다. 테스트 목록은 `.check.toml` 의 `test_command` 를 읽으므로 따로 고치지 않는다.
@@ -66,6 +67,10 @@
 - `plugin/skills/repo-setup/SKILL.md` — 진입점. 실측하고 고르고 좁은 스킬을 부르고 보고한다. **세팅을 직접 하지 않는다.**
 - `plugin/skills/repo-privacy/SKILL.md` — 좁은 스킬. 템플릿 둘을 본문에 품는다.
 - `tests/` — 위 검사 명령.
+- `docs/wiki/` — 구현된 기능이 무엇을 하고 어떻게 동작하는지. 기능을 바꾸는 PR 은 그 기능의 페이지를
+  같은 PR 에서 고친다. 이유는 쓰지 않고 ADR 을 링크한다.
+- `docs/adr/` — 설계 결정 하나에 파일 하나(`NNNN-<영어-kebab-slug>.md`). 왜 그렇게 정했는지만 적고,
+  선택 조건이나 순서 같은 실행 규칙은 `SKILL.md` 에만 둔다. 뒤집힌 결정은 지우지 않고 상태를 바꾼다.
 
 ## 주의
 
