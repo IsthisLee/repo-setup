@@ -29,7 +29,7 @@ $ARGUMENTS 용도로 이 저장소를 세팅한다. 용도를 안 적었으면 1
 git rev-parse --show-toplevel            # git 저장소인가. 아니면 멈춘다
 git remote -v                            # 호스트: GitHub · GitLab · Bitbucket · 없음
 git config core.hooksPath                # 이미 다른 훅 관리자가 잡고 있나
-ls "$(git rev-parse --git-common-dir)/hooks" | grep -v '\.sample$'   # .git/hooks 에 이미 훅이 있나
+find "$(git rev-parse --git-common-dir)/hooks" -type f -perm -u+x ! -name '*.sample'   # .git/hooks 에 도는 훅이 있나
 ls -a                                    # 이미 있는 것: .gitignore · LICENSE · .github/ · CI 설정
 ```
 
