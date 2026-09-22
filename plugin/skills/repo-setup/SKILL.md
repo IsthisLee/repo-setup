@@ -29,6 +29,7 @@ $ARGUMENTS 용도로 이 저장소를 세팅한다. 용도를 안 적었으면 1
 git rev-parse --show-toplevel            # git 저장소인가. 아니면 멈춘다
 git remote -v                            # 호스트: GitHub · GitLab · Bitbucket · 없음
 git config core.hooksPath                # 이미 다른 훅 관리자가 잡고 있나
+find "$(git rev-parse --git-common-dir)/hooks" -type f -perm -u+x ! -name '*.sample'   # .git/hooks 에 도는 훅이 있나
 ls -a                                    # 이미 있는 것: .gitignore · LICENSE · .github/ · CI 설정
 ```
 
@@ -47,7 +48,7 @@ gh api user --jq '.login'
 | 공개/비공개 | `visibility` | 공개면 홈 경로·이메일이 실제 위험. 비공개면 자격증명 쪽이 우선 |
 | 개인/팀 | `org` 가 `true`, `owner` 가 내 로그인과 다름, `perm` 이 `ADMIN` 아님 중 하나라도 | **팀이면 공유 자산을 고치지 않고 제안만 한다** |
 | 호스트 | `git remote -v` | 서버 층 명령이 갈린다. 없으면 로컬 층만 |
-| 기존 도구 | `core.hooksPath`, 파일 목록 | 덮어쓰지 않고 얹는다 |
+| 기존 도구 | `core.hooksPath`, `.git/hooks`, 파일 목록 | 덮어쓰지 않고 얹는다 |
 
 판별이 안 되면 **팀 저장소이고 공개라고 간주한다.** 모르는 쪽에서 안전한 선택이다.
 

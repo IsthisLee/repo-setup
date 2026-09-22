@@ -13,7 +13,8 @@
 # 사용법:
 #   ./setup.sh                  훅을 켠다
 #   ./setup.sh --init-patterns  공용 개인 패턴 파일의 견본을 만든다(없을 때만)
-#   ./setup.sh --force          이미 다른 훅 관리자가 잡고 있어도 덮어쓴다
+#   ./setup.sh --force          이미 다른 훅이 있어도 덮어쓴다
+#   ./setup.sh --verify         가드가 실제로 막는지 확인한다(커밋을 만들지 않고 설정도 바꾸지 않는다)
 set -u
 
 HOOKS_DIR=.githooks
@@ -21,12 +22,60 @@ GLOBAL_PATTERNS="${GIT_GUARD_PATTERNS:-${XDG_CONFIG_HOME:-${HOME:-}/.config}/git
 
 die() { printf '%s\n' "setup: $1" >&2; exit 1; }
 
+# 가드가 실제로 막는지 커밋을 만들지 않고 증명한다. 임시 인덱스에 HEAD 와 탐침 파일 하나만
+# 올리고, git 이 커밋할 때 부를 pre-commit 을 그 인덱스로 돌린다. 사용자의 인덱스와 히스토리는
+# 그대로이고, 남는 것은 참조되지 않는 blob 하나다(git gc 가 치운다). 다른 관리자와 공존하면 그쪽
+# 훅 전체가 이 인덱스로 돌고, 그 훅이 작업 트리를 다루면 실제 커밋 때와 같은 일을 한다. 탐침은 훅에
+# 박힌 홈 경로 패턴에 걸리는 값이라 패턴 파일이 없어도 막혀야 한다. 판정은 훅의 차단 문구에
+# 기대므로, 그 문구를 바꾸면 tests/setup/unit.sh 가 잡는다.
+verify_tmp=""
+trap 'rm -rf "$verify_tmp"' EXIT
+verify_guard() {
+  local hook blob out rc
+  hook="$(git rev-parse --git-path hooks)/pre-commit"
+  if [ ! -f "$hook" ] || [ ! -x "$hook" ]; then
+    printf '%s\n' "검증 실패: git 이 돌릴 pre-commit 이 없거나 실행 비트가 없다: ${hook}" >&2
+    printf '%s\n' "  ./setup.sh 로 켜거나, 다른 훅과 공존한다면 그 훅이 ${HOOKS_DIR}/pre-commit 을 부르게 해라." >&2
+    return 1
+  fi
+  verify_tmp=$(mktemp -d) || die "임시 폴더를 만들지 못했다."
+  if git rev-parse -q --verify HEAD >/dev/null; then
+    GIT_INDEX_FILE="$verify_tmp/index" git read-tree HEAD || die "임시 인덱스를 만들지 못했다."
+  else
+    GIT_INDEX_FILE="$verify_tmp/index" git read-tree --empty || die "임시 인덱스를 만들지 못했다."
+  fi
+  # 소스에 홈 경로를 통째로 적으면 이 파일 자신이 가드에 걸린다. 실행할 때 조립한다.
+  blob=$(printf '%s\n' "/Users""/guard-probe/x" | git hash-object -w --stdin) || die "탐침을 만들지 못했다."
+  GIT_INDEX_FILE="$verify_tmp/index" git update-index --add --cacheinfo "100644,${blob},guard-probe.txt" \
+    || die "탐침을 임시 인덱스에 올리지 못했다."
+  out=$(GIT_INDEX_FILE="$verify_tmp/index" "$hook" < /dev/null 2>&1); rc=$?
+  if [ "$rc" -eq 0 ]; then
+    printf '%s\n' "검증 실패: 가드가 탐침을 막지 않았다(훅: ${hook})." >&2
+    printf '%s\n' "  그 훅이 ${HOOKS_DIR}/pre-commit 을 부르는지, 가드가 꺼져 있지 않은지 확인해라." >&2
+    return 1
+  fi
+  case "$out" in
+    *"패턴을 읽지 못한다"*)
+      printf '%s\n' "검증 실패: 패턴 파일에 읽지 못하는 줄이 있어 모든 커밋이 막힌다. 파일과 줄 번호:" >&2
+      printf '%s\n' "$out" | grep '패턴을 읽지 못한다' | sed 's/^/    /' >&2
+      return 1;;
+    *"개인 식별 정보가 있다: guard-probe.txt"*)
+      printf '%s\n' "검증 통과: 탐침이 막혔다(훅: ${hook}). 커밋은 만들지 않았다."
+      return 0;;
+  esac
+  printf '%s\n' "검증 실패: 막혔지만 가드가 막은 것이 아니다(훅: ${hook}). 훅 출력:" >&2
+  printf '%s\n' "$out" | sed 's/^/    /' >&2
+  return 1
+}
+
 init_patterns=0
 force=0
+verify=0
 for arg in "$@"; do
   case "$arg" in
     --init-patterns) init_patterns=1;;
     --force) force=1;;
+    --verify) verify=1;;
     -h|--help) awk 'NR>1 { if ($0 !~ /^#/) exit; sub(/^# ?/, ""); print }' "$0"; exit 0;;
     *) die "모르는 인자: ${arg}";;
   esac
@@ -34,6 +83,11 @@ done
 
 root=$(git rev-parse --show-toplevel 2>/dev/null) || die "git 저장소 안에서 실행해라."
 cd "$root" || die "저장소 루트로 이동하지 못했다: ${root}"
+
+if [ "$verify" -eq 1 ]; then
+  verify_guard
+  exit $?
+fi
 
 [ -d "$HOOKS_DIR" ] || die "${HOOKS_DIR}/ 가 없다. 훅 폴더를 먼저 두어라."
 
@@ -46,13 +100,34 @@ for h in "$HOOKS_DIR"/*; do
 done
 [ "$hooks" -gt 0 ] || die "${HOOKS_DIR}/ 에 훅 파일이 없다."
 
-# core.hooksPath 는 값을 하나만 가진다. 이미 다른 훅 관리자(husky·lefthook 등)가 잡고 있는데
+# core.hooksPath 는 값을 하나만 가진다. 이미 다른 훅 관리자(husky 등)가 잡고 있는데
 # 덮으면 그쪽 훅이 조용히 죽는다. 막히는 일이 없어지므로 아무도 눈치채지 못한다.
 # 실측: husky 가 잡은 저장소를 덮자 husky 의 pre-commit 이 돌지 않고 커밋이 통과했다.
+#
+# core.hooksPath 가 비어 있으면 git 은 .git/hooks 를 본다. 손으로 쓴 훅이나 그 자리에 설치된
+# 관리자의 훅이 거기 있을 수 있다. core.hooksPath 를 걸면 git 이 그 자리를 더는 보지 않으므로
+# 그 훅도 같은 식으로 죽는다. git 은 실행 비트가 있는 파일만 돌리고, .sample 은 견본이다.
+# 워크트리는 훅을 공통 폴더에서 찾으므로 --git-common-dir 을 본다.
+common=$(git rev-parse --git-common-dir) || die "git 폴더를 찾지 못했다."
+legacy=""
+for h in "$common"/hooks/*; do
+  [ -f "$h" ] || continue
+  [ -x "$h" ] || continue
+  case "$h" in *.sample) continue;; esac
+  legacy="${legacy} ${h##*/}"
+done
 existing=$(git config core.hooksPath 2>/dev/null || true)
 if [ -n "$existing" ] && [ "$existing" != "$HOOKS_DIR" ] && [ "$force" -eq 0 ]; then
   printf '%s\n' "setup: core.hooksPath 가 이미 '${existing}' 다. 덮으면 그쪽 훅이 조용히 죽는다." >&2
   printf '%s\n' "  공존하려면 그쪽 관리자의 pre-commit 에 이 한 줄을 넣어라:" >&2
+  printf '%s\n' "      \"\$(git rev-parse --show-toplevel)\"/${HOOKS_DIR}/pre-commit || exit 1" >&2
+  printf '%s\n' "  기존 훅을 버리고 덮어쓰려면: ./setup.sh --force" >&2
+  exit 1
+fi
+if [ -z "$existing" ] && [ -n "$legacy" ] && [ "$force" -eq 0 ]; then
+  printf '%s\n' "setup: ${common}/hooks 에 이미 훅이 있다:${legacy}" >&2
+  printf '%s\n' "  core.hooksPath 를 걸면 git 이 그 자리를 보지 않아 그 훅이 조용히 죽는다." >&2
+  printf '%s\n' "  공존하려면 그 훅에서 이 한 줄을 부르게 해라. 관리자가 만든 훅이면 관리자의 설정에 넣어라:" >&2
   printf '%s\n' "      \"\$(git rev-parse --show-toplevel)\"/${HOOKS_DIR}/pre-commit || exit 1" >&2
   printf '%s\n' "  기존 훅을 버리고 덮어쓰려면: ./setup.sh --force" >&2
   exit 1
@@ -64,6 +139,12 @@ git config core.hooksPath "$HOOKS_DIR" || die "core.hooksPath 설정에 실패�
 got=$(git config core.hooksPath || true)
 [ "$got" = "$HOOKS_DIR" ] || die "설정이 되읽히지 않는다(값: '${got}')."
 printf '%s\n' "core.hooksPath = ${got}  (훅 ${hooks}개)"
+
+# --force 로 덮었거나, 이 검사가 없던 때에 이미 덮인 저장소다. 설정은 그대로 두고 알린다.
+if [ -n "$legacy" ]; then
+  printf '%s\n' "주의: ${common}/hooks 의 훅은 core.hooksPath 가 걸려 있어 돌지 않는다:${legacy}" >&2
+  printf '%s\n' "  그 훅이 필요하면 'git config --unset core.hooksPath' 로 되돌리고, 그 훅에서 ${HOOKS_DIR}/pre-commit 을 부르게 해라." >&2
+fi
 
 if [ "$init_patterns" -eq 1 ] && [ ! -f "$GLOBAL_PATTERNS" ]; then
   mkdir -p "$(dirname "$GLOBAL_PATTERNS")" || die "패턴 폴더를 만들지 못했다."

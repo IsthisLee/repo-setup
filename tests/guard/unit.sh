@@ -71,4 +71,41 @@ t1() { local f="$1" body="$2"
 check block "$(t1 i.txt 'team-thing')"                   "둘 다 있을 때 팀 패턴 적용"
 check block "$(t1 j.txt 'my-private-thing')"             "둘 다 있을 때 개인 패턴 적용"
 
+# 7. 이름이 어떻게 생겼든, 작업 트리에 남아 있든 말든 스테이징된 내용을 검사한다.
+#    이름을 단어로 쪼개거나 작업 트리에서 파일을 찾으면 한글·공백 이름과 지운 파일이 빠져나간다.
+N="$T/names"; mkrepo "$N"; git -C "$N" commit -q --allow-empty -m base
+check block "$(try "$N" '한글.txt' "see $home_probe")"          "한글 파일명 → 차단"
+check block "$(try "$N" 'my file.txt' "see $home_probe")"       "공백이 든 파일명 → 차단"
+check block "$(try "$N" "$(printf 'a\nb.txt')" "see $home_probe")" "줄바꿈이 든 파일명 → 차단"
+check block "$(try "$N" '.private/회의록.md' 'clean')"          ".private/ 아래 한글 파일명 → 차단"
+check ok    "$(try "$N" '깨끗한 메모.txt' 'hello')"             "깨끗한 한글·공백 파일명 → 통과(읽지 못해 막은 것이 아니다)"
+commit_n() { if (cd "$N" && env GIT_GUARD_PATTERNS=/nonexistent HOME=/nonexistent git commit -q -m t >/dev/null 2>&1); then echo ok; else echo block; fi; }
+printf '%s\n' "see $home_probe" > "$N/gone.txt"; git -C "$N" add gone.txt; rm "$N/gone.txt"
+check block "$(commit_n)"                                     "스테이징한 뒤 작업 트리에서 지운 파일 → 차단"
+git -C "$N" reset -q HEAD -- gone.txt 2>/dev/null || true
+ln -s "$home_probe" "$N/link"; git -C "$N" add link
+check block "$(commit_n)"                                     "홈 경로를 가리키는 심볼릭 링크 → 차단"
+git -C "$N" reset -q HEAD -- link 2>/dev/null || true; rm -f "$N/link"
+git -C "$N" update-index --add --cacheinfo "160000,$(git -C "$N" rev-parse HEAD),sub"
+check ok    "$(commit_n)"                                     "서브모듈 항목은 내용이 없다 → 통과"
+
+# 8. 읽지 못하는 패턴이 가드를 끄지 않는다. grep 은 문법 오류에 2 를 내는데, 그것을 "없다"로
+#    읽으면 내장 홈 경로 검사까지 함께 꺼진다. 막을 때는 줄 번호만 보이고 패턴 값은 보이지 않는다.
+Q="$T/patterns"; mkrepo "$Q"; git -C "$Q" commit -q --allow-empty -m base
+mkdir -p "$Q/.private"
+printf '%s\n' '# 주석' 'bad-pattern(' > "$Q/.private/guard-patterns"
+check block "$(try "$Q" k.txt 'hello')"                        "읽지 못하는 패턴 줄 → 깨끗한 파일도 차단"
+msg_q() { printf '%s\n' "$2" > "$Q/$1"; git -C "$Q" add -f "$1" >/dev/null 2>&1
+  (cd "$Q" && env GIT_GUARD_PATTERNS=/nonexistent HOME=/nonexistent git commit -q -m t 2>&1)
+  git -C "$Q" reset -q HEAD -- "$1" 2>/dev/null || true; rm -f "$Q/$1"; }
+out=$(msg_q l.txt "see $home_probe")
+printf '%s' "$out" | grep -q 'guard-patterns 2번째 줄'; check 0 $? "차단 메시지에 패턴 파일과 줄 번호를 보인다"
+printf '%s' "$out" | grep -q 'bad-pattern'; check 1 $? "차단 메시지에 패턴 값을 보이지 않는다"
+printf '%s' "$out" | grep -q '개인 식별 정보가 있다: l.txt'; check 0 $? "읽지 못하는 줄이 있어도 나머지 검사는 돈다"
+printf 'crlf-secret\r\n# crlf-comment\r\n' > "$Q/.private/guard-patterns"
+check block "$(try "$Q" n.txt 'has crlf-secret')"              "CRLF 패턴 파일의 값 → 차단"
+check ok    "$(try "$Q" o.txt '# crlf-comment')"               "CRLF 주석 줄은 패턴이 아니다"
+printf 'first-thing\nlast-thing' > "$Q/.private/guard-patterns"
+check block "$(try "$Q" p.txt 'has last-thing')"               "줄바꿈 없이 끝나는 마지막 줄 → 차단"
+
 echo; echo "실패 ${fail}건"; exit "$fail"

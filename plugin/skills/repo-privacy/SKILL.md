@@ -1,6 +1,6 @@
 ---
 name: repo-privacy
-description: Install a pre-commit guard that blocks personal information (home paths, email addresses, internal domains, private repository names) from being committed, then prove it blocks by attempting a commit. Writes .githooks/pre-commit and setup.sh and sets core.hooksPath. Use it when starting a public repository or porting the guard to another project. 공개 저장소에 개인 정보(홈 경로, 이메일, 사내 도메인, 사적인 저장소 이름)가 커밋되는 것을 막는 pre-commit 가드를 깔고, 실제로 막히는지 커밋을 시도해 확인한다. .githooks/pre-commit 과 setup.sh 를 두고 core.hooksPath 를 건다. 새 공개 저장소를 시작할 때, 세션 프로필이 커밋 가드가 꺼졌다고 알릴 때, 다른 프로젝트로 가드를 옮길 때 쓴다.
+description: Install a pre-commit guard that blocks personal information (home paths, email addresses, internal domains, private repository names) from being committed, then prove it blocks with a probe that creates no commit. Writes .githooks/pre-commit and setup.sh and sets core.hooksPath. Use it when starting a public repository or porting the guard to another project. 공개 저장소에 개인 정보(홈 경로, 이메일, 사내 도메인, 사적인 저장소 이름)가 커밋되는 것을 막는 pre-commit 가드를 깔고, 커밋을 만들지 않는 탐침으로 실제로 막히는지 확인한다. .githooks/pre-commit 과 setup.sh 를 두고 core.hooksPath 를 건다. 새 공개 저장소를 시작할 때, 세션 프로필이 커밋 가드가 꺼졌다고 알릴 때, 다른 프로젝트로 가드를 옮길 때 쓴다.
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---
@@ -68,8 +68,10 @@ $ARGUMENTS 에 가드를 깐다(기본값은 현재 저장소). 깔고 나서 **
    `repo-setup` 이 이 스킬을 부르면서 실측값을 넘겨줬으면 **다시 재지 않는다.** 받은 값을 그대로 쓰고
    무엇을 받아 썼는지 보고에 적는다. 단독으로 불렸으면 여기서 직접 잰다.
    - `git rev-parse --show-toplevel` 로 git 저장소인지 본다. 아니면 멈춘다.
-   - `git config core.hooksPath` 를 읽는다. **이미 다른 값이 있으면 다른 훅 관리자가 잡고 있는 것이다.**
-     이 설정은 값을 하나만 가지므로 덮으면 그쪽 훅이 조용히 죽는다. 그때는 4b 로 간다.
+   - `git config core.hooksPath` 를 읽고, `.git/hooks` 에 `.sample` 이 아닌 실행 파일이 있는지 본다.
+     **둘 중 하나라도 있으면 다른 훅이 이미 돌고 있는 것이다.** `core.hooksPath` 는 값을 하나만 가지고,
+     그 값을 걸면 git 이 `.git/hooks` 를 더는 보지 않는다. 어느 쪽이든 덮으면 그쪽 훅이 조용히 죽는다.
+     그때는 4b 로 간다.
    - `git remote -v` 로 호스트를 본다. GitHub, GitLab, Bitbucket, 또는 없음. 7단계가 여기서 갈린다.
    - GitHub 원격이 있으면 한 번에 본다.
 
@@ -94,32 +96,47 @@ $ARGUMENTS 에 가드를 깐다(기본값은 현재 저장소). 깔고 나서 **
 
 4. **켠다.** 길이 둘이고, 1단계가 어느 쪽인지 알려 준다.
 
-   **4a. `core.hooksPath` 를 아무도 잡고 있지 않다.** `./setup.sh` 를 돌린다. 이 기계의 첫 저장소라면
+   **4a. 다른 훅이 없다.** `core.hooksPath` 가 비어 있고 `.git/hooks` 에도 훅이 없다. `./setup.sh` 를 돌린다. 이 기계의 첫 저장소라면
    `./setup.sh --init-patterns` 를 돌리고, 만들어진 `~/.config/git-guard/patterns` 를 **사람이 직접 채우게
    한다.** 그 파일의 내용은 절대 대신 쓰지 않는다. 무엇이 민감한지는 사람만 안다. 두 번째 저장소부터는
    공용 목록이 이미 있으므로 `./setup.sh` 만 돌리면 된다.
 
-   **4b. 다른 관리자가 잡고 있다**(husky, lefthook, pre-commit, simple-git-hooks). `--force` 를 **쓰지 말고**,
-   `core.hooksPath` 를 손으로 고치지도 않는다. 그쪽 관리자의 `pre-commit` 에 한 줄을 넣어 둘 다 돌게 한다.
+   **4b. 다른 훅이 이미 있다.** `core.hooksPath` 를 잡은 관리자(husky 등)일 수도 있고, `.git/hooks` 에 놓인
+   훅일 수도 있다. `setup.sh` 는 두 경우 모두 덮지 않고 멈춘다. `--force` 를 **쓰지 말고**, `core.hooksPath` 를
+   손으로 고치지도 않는다. 그쪽 훅이 이 한 줄을 부르게 해 둘 다 돌게 한다.
 
    ```bash
    "$(git rev-parse --show-toplevel)"/.githooks/pre-commit || exit 1
    ```
 
-   husky 라면 그 파일은 `.husky/pre-commit` 이고, lefthook 이라면 `lefthook.yml` 의 명령 항목이다. 이 길로
-   갔다는 사실과 이유를 보고에 적는다. `--force` 는 기존 관리자를 버리기로 사람이 정했을 때만 쓴다.
+   husky 라면 그 파일은 `.husky/pre-commit` 이고, lefthook 이라면 `lefthook.yml` 의 명령 항목이다.
+   `.git/hooks` 의 훅을 관리자가 만들었다면 그 파일이 아니라 관리자의 설정에 넣는다. 관리자가 훅 파일을
+   다시 만들면 손으로 넣은 줄이 사라질 수 있다. 이 길로 갔다는 사실과 이유를 보고에 적는다. `--force` 는
+   기존 훅을 버리기로 사람이 정했을 때만 쓴다.
 
-5. **막히는지 증명한다.** 설정을 걸었다고 적용된 것이 아니다. 가드가 잡아야 할 패턴으로 탐침 파일을 만들어
-   스테이징하고 실제로 커밋을 시도한다. **패턴 값이 대화 기록에 남지 않도록 출력은 버리고 종료 코드만 본다.**
+5. **막히는지 증명한다.** 설정을 걸었다고 적용된 것이 아니다. `./setup.sh --verify` 를 돌리고 종료 코드를 본다.
 
    ```bash
-   probe=$(grep -vE '^[[:space:]]*(#|$)' "${GIT_GUARD_PATTERNS:-${XDG_CONFIG_HOME:-$HOME/.config}/git-guard/patterns}" | head -1 | tr -d '\\')
-   printf 'x %s y\n' "$probe" > guard-probe.txt && git add guard-probe.txt
-   if git commit -q -m probe >/dev/null 2>&1; then echo "실패: 가드가 막지 않았다"; else echo "정상: 막혔다"; fi
-   git reset -q HEAD -- guard-probe.txt; rm -f guard-probe.txt
+   ./setup.sh --verify; echo "exit=$?"
    ```
 
-   커밋이 성공하면 가드는 꺼진 것이다. 왜인지 알아내기 전에는 성공했다고 보고하지 않는다.
+   임시 인덱스에 홈 경로를 담은 탐침 파일 하나만 올리고, git 이 커밋할 때 부를 `pre-commit` 을 그 인덱스로
+   돌린다. **커밋을 만들지 않고**, 사용자의 인덱스와 히스토리, `core.hooksPath` 를 건드리지 않는다. 탐침은
+   훅에 박힌 홈 경로 패턴에 걸리므로 패턴 파일이 없어도 막혀야 한다. 출력에는 패턴 값이 나오지 않는다.
+
+   4a 처럼 가드만 걸려 있으면 작업 트리도 그대로다. 4b 로 공존했다면 그쪽 훅 전체가 임시 인덱스로 돈다.
+   그 훅이 lint-staged 처럼 작업 트리를 고치거나 stash 하는 도구를 부르면 실제 커밋 때와 같은 일을 하므로,
+   작업 트리의 변경을 먼저 커밋하거나 치운 뒤 돌린다.
+
+   | 출력 | 뜻 |
+   |---|---|
+   | `검증 통과` (exit 0) | git 이 부르는 훅이 가드를 거쳐 탐침을 막았다 |
+   | `막지 않았다` | 훅은 돌았지만 가드를 거치지 않았다. 공존 한 줄이 빠졌거나 가드가 꺼져 있다 |
+   | `pre-commit 이 없거나` | git 이 부를 훅이 없다. 4단계가 적용되지 않았다 |
+   | `읽지 못하는 줄` | 패턴 파일에 grep -E 로 읽히지 않는 줄이 있어 모든 커밋이 막힌다. 파일과 줄 번호만 나오므로 사람이 고치게 한다 |
+   | `가드가 막은 것이 아니다` | 다른 훅이 먼저 실패했다. 출력된 훅 메시지를 그대로 보고한다 |
+
+   exit 0 이 아니면 가드는 동작하지 않는 것이다. 왜인지 알아내기 전에는 성공했다고 보고하지 않는다.
 
 6. **에이전트에게 알린다.**(팀 저장소면 제안만) 그 저장소의 `CLAUDE.md`·`AGENTS.md`·`CONTRIBUTING.md` 의 개발 환경 절 첫 줄에
    `./setup.sh` 를 넣고, `--no-verify` 가 에이전트의 탈출구가 아니라는 것을 명시한다. 규칙 파일에 없는

@@ -16,36 +16,61 @@
 set -u
 root="$(git rev-parse --show-toplevel)"
 fail=0
-paths=$(git diff --cached --name-only --diff-filter=ACMR)
-for f in $paths; do
-  case "$f" in
-    .private/*)
-      echo "pre-commit: 내부 문서는 공개 저장소에 올리지 않는다: $f"; fail=1;;
-  esac
-done
+tmp="$(mktemp -d)" || { echo "pre-commit: 임시 폴더를 만들지 못했다. 검사하지 못했으므로 막는다."; exit 1; }
+trap 'rm -rf "$tmp"' EXIT
 pattern='/Users/[A-Za-z]|/home/[A-Za-z]'
-# 패턴 파일 한 개를 읽어 pattern 에 덧붙인다. 주석 줄과 빈 줄은 버린다.
+# 패턴 파일 한 개를 한 줄씩 읽어 pattern 에 덧붙인다. 주석 줄과 빈 줄은 버리고, Windows 에서
+# 저장하면 붙는 줄 끝의 CR 을 뗀다. grep -E 가 읽지 못하는 줄은 합치지 않고 커밋을 막는다.
+# 합쳐 넣으면 패턴 전체가 망가져 홈 경로 검사까지 꺼진다. 패턴 값은 출력하지 않는다.
 add_patterns() {
-  local file="$1" extra
+  local file="$1" line n=0
   [ -f "$file" ] || return 0
-  extra=$(grep -v '^[[:space:]]*#' "$file" | grep -v '^[[:space:]]*$' | paste -sd '|' -)
-  [ -n "$extra" ] && pattern="$pattern|$extra"
+  while IFS= read -r line || [ -n "$line" ]; do
+    n=$((n + 1))
+    line="${line%$'\r'}"
+    case "$line" in *[![:space:]]*) ;; *) continue;; esac
+    case "${line#"${line%%[![:space:]]*}"}" in '#'*) continue;; esac
+    grep -E -e "$line" < /dev/null > /dev/null 2>&1
+    if [ "$?" -ge 2 ]; then
+      echo "pre-commit: 패턴을 읽지 못한다: $file ${n}번째 줄 (grep -E 문법을 확인해라)"
+      fail=1; continue
+    fi
+    pattern="$pattern|$line"
+  done < "$file"
   return 0
 }
 team_file="$root/.githooks/team-patterns"
 add_patterns "$team_file"
 add_patterns "${GIT_GUARD_PATTERNS:-${XDG_CONFIG_HOME:-${HOME:-}/.config}/git-guard/patterns}"
 add_patterns "$root/.private/guard-patterns"
-for f in $paths; do
-  [ -f "$f" ] || continue
+# 목록은 NUL 로 구분해 받는다. 공백이나 줄바꿈으로 쪼개면 공백이 든 이름이 갈라지고,
+# core.quotePath 기본값은 한글 이름을 따옴표로 감싸 아래 case 문과 어긋난다.
+# 내용은 작업 트리가 아니라 diff 가 알려 준 blob 에서 읽는다. 커밋되는 것은 인덱스이고,
+# 스테이징한 뒤 작업 트리에서 지운 파일도 인덱스에는 남아 있다.
+if ! git diff --cached --raw -z --no-renames --no-abbrev --diff-filter=ACMT > "$tmp/list"; then
+  echo "pre-commit: 스테이징 목록을 읽지 못했다. 검사하지 못했으므로 막는다."; exit 1
+fi
+while IFS= read -r -d '' meta && IFS= read -r -d '' f; do
+  read -r _ mode _ blob _ <<< "$meta"
+  case "$f" in
+    .private/*)
+      echo "pre-commit: 내부 문서는 공개 저장소에 올리지 않는다: $f"; fail=1;;
+  esac
+  # 서브모듈 항목은 다른 저장소의 커밋을 가리킬 뿐 이 저장소에 내용이 없다.
+  [ "$mode" = 160000 ] && continue
   # 팀 패턴 파일은 막으려는 문자열을 그대로 품고 있다. 내용 검사에 넣으면 자기 자신을
   # 커밋하지 못해 팀에 전달할 방법이 없어진다.
   [ "$root/$f" = "$team_file" ] && continue
-  if git show ":$f" | grep -n -E "$pattern" >/dev/null; then
-    echo "pre-commit: 개인 식별 정보가 있다: $f"
-    git show ":$f" | grep -n -E "$pattern" | head -3 | sed 's/^/    /'
-    fail=1
+  if ! git cat-file blob "$blob" > "$tmp/blob"; then
+    echo "pre-commit: 내용을 읽지 못했다. 검사하지 못했으므로 막는다: $f"; fail=1; continue
   fi
-done
+  # grep 의 종료 코드는 셋이다. 1 만 "없다"이고, 2 이상은 검사하지 못했다는 뜻이다.
+  grep -n -E -e "$pattern" < "$tmp/blob" > "$tmp/hit" 2>/dev/null
+  case $? in
+    0) echo "pre-commit: 개인 식별 정보가 있다: $f"; head -3 "$tmp/hit" | sed 's/^/    /'; fail=1;;
+    1) ;;
+    *) echo "pre-commit: 내용을 검사하지 못했다. 검사하지 못했으므로 막는다: $f"; fail=1;;
+  esac
+done < "$tmp/list"
 [ "$fail" -eq 0 ] || { echo "커밋을 막았다. 파일을 .private/로 옮기거나 문자열을 지워라."; exit 1; }
 exit 0
