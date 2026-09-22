@@ -89,4 +89,23 @@ git -C "$N" reset -q HEAD -- link 2>/dev/null || true; rm -f "$N/link"
 git -C "$N" update-index --add --cacheinfo "160000,$(git -C "$N" rev-parse HEAD),sub"
 check ok    "$(commit_n)"                                     "서브모듈 항목은 내용이 없다 → 통과"
 
+# 8. 읽지 못하는 패턴이 가드를 끄지 않는다. grep 은 문법 오류에 2 를 내는데, 그것을 "없다"로
+#    읽으면 내장 홈 경로 검사까지 함께 꺼진다. 막을 때는 줄 번호만 보이고 패턴 값은 보이지 않는다.
+Q="$T/patterns"; mkrepo "$Q"; git -C "$Q" commit -q --allow-empty -m base
+mkdir -p "$Q/.private"
+printf '%s\n' '# 주석' 'bad-pattern(' > "$Q/.private/guard-patterns"
+check block "$(try "$Q" k.txt 'hello')"                        "읽지 못하는 패턴 줄 → 깨끗한 파일도 차단"
+msg_q() { printf '%s\n' "$2" > "$Q/$1"; git -C "$Q" add -f "$1" >/dev/null 2>&1
+  (cd "$Q" && env GIT_GUARD_PATTERNS=/nonexistent HOME=/nonexistent git commit -q -m t 2>&1)
+  git -C "$Q" reset -q HEAD -- "$1" 2>/dev/null || true; rm -f "$Q/$1"; }
+out=$(msg_q l.txt "see $home_probe")
+printf '%s' "$out" | grep -q 'guard-patterns 2번째 줄'; check 0 $? "차단 메시지에 패턴 파일과 줄 번호를 보인다"
+printf '%s' "$out" | grep -q 'bad-pattern'; check 1 $? "차단 메시지에 패턴 값을 보이지 않는다"
+printf '%s' "$out" | grep -q '개인 식별 정보가 있다: l.txt'; check 0 $? "읽지 못하는 줄이 있어도 나머지 검사는 돈다"
+printf 'crlf-secret\r\n# crlf-comment\r\n' > "$Q/.private/guard-patterns"
+check block "$(try "$Q" n.txt 'has crlf-secret')"              "CRLF 패턴 파일의 값 → 차단"
+check ok    "$(try "$Q" o.txt '# crlf-comment')"               "CRLF 주석 줄은 패턴이 아니다"
+printf 'first-thing\nlast-thing' > "$Q/.private/guard-patterns"
+check block "$(try "$Q" p.txt 'has last-thing')"               "줄바꿈 없이 끝나는 마지막 줄 → 차단"
+
 echo; echo "실패 ${fail}건"; exit "$fail"

@@ -19,12 +19,24 @@ fail=0
 tmp="$(mktemp -d)" || { echo "pre-commit: 임시 폴더를 만들지 못했다. 검사하지 못했으므로 막는다."; exit 1; }
 trap 'rm -rf "$tmp"' EXIT
 pattern='/Users/[A-Za-z]|/home/[A-Za-z]'
-# 패턴 파일 한 개를 읽어 pattern 에 덧붙인다. 주석 줄과 빈 줄은 버린다.
+# 패턴 파일 한 개를 한 줄씩 읽어 pattern 에 덧붙인다. 주석 줄과 빈 줄은 버리고, Windows 에서
+# 저장하면 붙는 줄 끝의 CR 을 뗀다. grep -E 가 읽지 못하는 줄은 합치지 않고 커밋을 막는다.
+# 합쳐 넣으면 패턴 전체가 망가져 홈 경로 검사까지 꺼진다. 패턴 값은 출력하지 않는다.
 add_patterns() {
-  local file="$1" extra
+  local file="$1" line n=0
   [ -f "$file" ] || return 0
-  extra=$(grep -v '^[[:space:]]*#' "$file" | grep -v '^[[:space:]]*$' | paste -sd '|' -)
-  [ -n "$extra" ] && pattern="$pattern|$extra"
+  while IFS= read -r line || [ -n "$line" ]; do
+    n=$((n + 1))
+    line="${line%$'\r'}"
+    case "$line" in *[![:space:]]*) ;; *) continue;; esac
+    case "${line#"${line%%[![:space:]]*}"}" in '#'*) continue;; esac
+    grep -E -e "$line" < /dev/null > /dev/null 2>&1
+    if [ "$?" -ge 2 ]; then
+      echo "pre-commit: 패턴을 읽지 못한다: $file ${n}번째 줄 (grep -E 문법을 확인해라)"
+      fail=1; continue
+    fi
+    pattern="$pattern|$line"
+  done < "$file"
   return 0
 }
 team_file="$root/.githooks/team-patterns"
