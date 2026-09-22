@@ -7,7 +7,8 @@
 
 ## 검사 명령
 
-- `tests/guard/unit.sh` — 훅 12건. 패턴 출처 셋이 합쳐지는지, 팀 패턴 파일이 자기 자신을 막지 않는지 본다.
+- `tests/guard/unit.sh` — 훅 20건. 패턴 출처 셋이 합쳐지는지, 팀 패턴 파일이 자기 자신을 막지 않는지,
+  한글·공백 이름과 스테이징한 뒤 지운 파일도 검사하는지 본다.
 - `tests/setup/unit.sh` — 활성화 스크립트 14건. 남이 잡은 `core.hooksPath` 를 덮지 않는지 본다.
 - `tests/license/unit.sh` — 라이선스 대조기 24건. 알아보지 못한 본문에 이름을 붙이지 않는지 본다.
 - `tests/contrib/unit.sh` — 협업 파일 검사기와 골격 다섯 25건. GitHub 이 보는 자리를 모두
@@ -18,7 +19,7 @@
   테스트로 보지 않는지, 골격이 쓰기 권한을 주지 않는지 본다.
 - `tests/invariants.sh` — 매니페스트, 폴더명과 `name` 일치, 스킬 수, `repo-setup` 의 스킬 표 대조,
   템플릿 인용 대조, `npx skills` 탐색 경로, `description` 병기, 자리표시자 폴백, 부모 경로 참조,
-  매니페스트 description 대조, 실행 비트, 홈 경로 15건.  **합계 41건.**
+  매니페스트 description 대조, 실행 비트, 사본 일치, 홈 경로 18건.  **합계 147건.**
 - `shellcheck -x -s bash plugin/skills/*/templates/*.sh setup.sh .githooks/* tests/*.sh tests/*/*.sh`
 
 ## 규칙

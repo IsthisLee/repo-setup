@@ -71,4 +71,22 @@ t1() { local f="$1" body="$2"
 check block "$(t1 i.txt 'team-thing')"                   "둘 다 있을 때 팀 패턴 적용"
 check block "$(t1 j.txt 'my-private-thing')"             "둘 다 있을 때 개인 패턴 적용"
 
+# 7. 이름이 어떻게 생겼든, 작업 트리에 남아 있든 말든 스테이징된 내용을 검사한다.
+#    이름을 단어로 쪼개거나 작업 트리에서 파일을 찾으면 한글·공백 이름과 지운 파일이 빠져나간다.
+N="$T/names"; mkrepo "$N"; git -C "$N" commit -q --allow-empty -m base
+check block "$(try "$N" '한글.txt' "see $home_probe")"          "한글 파일명 → 차단"
+check block "$(try "$N" 'my file.txt' "see $home_probe")"       "공백이 든 파일명 → 차단"
+check block "$(try "$N" "$(printf 'a\nb.txt')" "see $home_probe")" "줄바꿈이 든 파일명 → 차단"
+check block "$(try "$N" '.private/회의록.md' 'clean')"          ".private/ 아래 한글 파일명 → 차단"
+check ok    "$(try "$N" '깨끗한 메모.txt' 'hello')"             "깨끗한 한글·공백 파일명 → 통과(읽지 못해 막은 것이 아니다)"
+commit_n() { if (cd "$N" && env GIT_GUARD_PATTERNS=/nonexistent HOME=/nonexistent git commit -q -m t >/dev/null 2>&1); then echo ok; else echo block; fi; }
+printf '%s\n' "see $home_probe" > "$N/gone.txt"; git -C "$N" add gone.txt; rm "$N/gone.txt"
+check block "$(commit_n)"                                     "스테이징한 뒤 작업 트리에서 지운 파일 → 차단"
+git -C "$N" reset -q HEAD -- gone.txt 2>/dev/null || true
+ln -s "$home_probe" "$N/link"; git -C "$N" add link
+check block "$(commit_n)"                                     "홈 경로를 가리키는 심볼릭 링크 → 차단"
+git -C "$N" reset -q HEAD -- link 2>/dev/null || true; rm -f "$N/link"
+git -C "$N" update-index --add --cacheinfo "160000,$(git -C "$N" rev-parse HEAD),sub"
+check ok    "$(commit_n)"                                     "서브모듈 항목은 내용이 없다 → 통과"
+
 echo; echo "실패 ${fail}건"; exit "$fail"
