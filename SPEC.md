@@ -622,5 +622,5 @@ GitHub 없이 로컬 임시 저장소 넷을 만들어 privacy 만 돌린다(`/r
 |---|---|---|
 | PR #1 | 병합(2026-09-22, 두 러너에서 177건 통과) | https://github.com/IsthisLee/repo-setup/pull/1 |
 | ① | 병합(2026-09-22) | https://github.com/IsthisLee/repo-setup/pull/2 |
-| ② | 진행 중 | |
+| ② | 열림, 두 러너 통과(2026-09-22), 병합 대기 | https://github.com/IsthisLee/repo-setup/pull/3 |
 | ③ ~ ⑭ | 대기 | |
