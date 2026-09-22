@@ -67,8 +67,11 @@ gh api user --jq '.login'
 ```bash
 gh pr list --state open --json number --jq length                         # 열린 PR 수
 git rev-list --count --since="30 days ago" "origin/<기본 브랜치>"           # 최근 30일 커밋 수
-ls .github/workflows/*.yml .github/workflows/*.yaml 2>/dev/null | wc -l   # 기존 워크플로 수
+find .github/workflows -maxdepth 1 -type f \( -name '*.yml' -o -name '*.yaml' \) 2>/dev/null | wc -l   # 기존 워크플로 수
 ```
+
+셸 글롭(`ls .github/workflows/*.yml`)으로 세지 않는다. zsh 는 맞는 파일이 없는 글롭 하나 때문에 명령 전체를
+실패시켜 0 을 낸다.
 
 여기서 정해지는 축이 넷이다.
 
