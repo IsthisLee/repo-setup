@@ -51,7 +51,7 @@ husky 처럼 `core.hooksPath` 를 잡은 관리자가 있거나 `.git/hooks` 에
 
 ## 바꾸는 것
 
-- 대상 저장소에 파일 둘을 놓는다. `.githooks/pre-commit` 과 `script/setup` 이고, 원본은
+- 대상 저장소에 파일 두 개를 놓는다. `.githooks/pre-commit` 과 `script/setup` 이고, 원본은
   `plugin/skills/repo-setup/privacy/templates/` 에 있다.
 - `script/setup` 이 그 클론의 `.git/config` 에 `core.hooksPath` 를 `.githooks` 로 쓴다. 이 값은 다른
   사람에게 전달되지 않는다.

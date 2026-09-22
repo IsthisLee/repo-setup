@@ -17,4 +17,4 @@
 | 0003 | [겹치는 파일과 설정의 소유를 정한다](0003-ownership-of-overlapping-files.md) | 승인 |
 | 0004 | [테스트 없는 저장소에 CI 를 만들지 않는다](0004-no-ci-without-tests.md) | 승인 |
 | 0005 | [팀 저장소의 공유 자산은 제안만 한다](0005-team-repos-propose-only.md) | 승인 |
-| 0006 | [스킬 하나에 목적별 폴더를 둔다](0006-single-skill-with-purpose-folders.md) | 승인 |
+| 0006 | [한 스킬에 목적별 폴더를 둔다](0006-single-skill-with-purpose-folders.md) | 승인 |

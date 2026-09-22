@@ -25,7 +25,7 @@
 
 ### 목적과 절차 문서
 
-목적 다섯은 스킬 `repo-setup` 안의 폴더다(`plugin/skills/repo-setup/privacy/` 등). 진입점은 고른 목적의
+목적 다섯 개는 스킬 `repo-setup` 안의 폴더다(`plugin/skills/repo-setup/privacy/` 등). 진입점은 고른 목적의
 `PROCEDURE.md` 를 읽어 그 단계를 따르고, 절차 문서가 가리키는 `scripts/` 의 스크립트는 스킬 폴더에서 그대로
 실행하며 `templates/` 의 파일은 대상 저장소로 복사한다. `/repo-setup:repo-setup license` 처럼 목적 이름
 하나를 인자로 주면 그 목적만 돈다. 이때도 공통 실측은 한다.
@@ -54,7 +54,7 @@
 
 ## 관련 ADR
 
-- [0006. 스킬 하나에 목적별 폴더를 둔다](../adr/0006-single-skill-with-purpose-folders.md)
+- [0006. 한 스킬에 목적별 폴더를 둔다](../adr/0006-single-skill-with-purpose-folders.md)
 - [0003. 겹치는 파일과 설정의 소유를 정한다](../adr/0003-ownership-of-overlapping-files.md)
 - [0005. 팀 저장소의 공유 자산은 제안만 한다](../adr/0005-team-repos-propose-only.md)
 

@@ -14,7 +14,7 @@
 /repo-setup:repo-setup 공개 오픈소스 라이브러리
 ```
 
-용도를 적지 않으면 실측 결과를 보인 뒤 물어봅니다. 목적 이름 하나를 주면 그 목적만 돕니다.
+용도를 적지 않으면 실측 결과를 보인 뒤 물어봅니다. 목적 이름을 주면 그 목적만 돕니다.
 
 ```
 /repo-setup:repo-setup license
@@ -84,10 +84,10 @@ claude plugin marketplace update repo-setup
 claude plugin update repo-setup@repo-setup
 ```
 
-업데이트하면 `claude plugin details repo-setup` 에 스킬 하나만 나옵니다. 0.1.0 의 캐시 폴더
+업데이트하면 `claude plugin details repo-setup` 에 스킬이 한 개만 나옵니다. 0.1.0 의 캐시 폴더
 (`~/.claude/plugins/cache/repo-setup/repo-setup/0.1.0/`)는 디스크에 남습니다.
 
-**`skills` CLI** 로 설치했으면 새 판을 받은 뒤 옛 스킬 다섯을 지웁니다. 새 판을 받아도 옛 스킬 폴더와
+**`skills` CLI** 로 설치했으면 새 판을 받은 뒤 옛 스킬 다섯 개를 지웁니다. 새 판을 받아도 옛 스킬 폴더와
 `skills-lock.json` 의 항목은 지워지지 않습니다. 전역으로 설치했으면 두 명령에 모두 `-g` 를 붙입니다.
 
 ```bash

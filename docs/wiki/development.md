@@ -60,7 +60,7 @@ tests/guard/unit.sh && tests/setup/unit.sh && tests/license/unit.sh && tests/ci/
 
 ## 관련 ADR
 
-- [0006. 스킬 하나에 목적별 폴더를 둔다](../adr/0006-single-skill-with-purpose-folders.md)
+- [0006. 한 스킬에 목적별 폴더를 둔다](../adr/0006-single-skill-with-purpose-folders.md)
 
 ## 확인한 외부 사실
 

@@ -39,7 +39,7 @@
 - **커밋에 개인 정보를 넣지 않는다.** 이 저장소가 다루는 주제가 그것이다.
 - **목적을 더하거나 빼면 진입점 `SKILL.md` 의 목적 표, 목적 폴더와 그 `PROCEDURE.md`, `docs/wiki/<목적>.md`
   를 함께 고친다.** 표와 실제가 어긋나면 없는 것을 읽으려 하거나 있는 것을 모르게 되고, 둘 다 조용히
-  일어난다. `tests/invariants.sh` 가 셋의 일치를 본다.
+  일어난다. `tests/invariants.sh` 가 세 곳의 일치를 본다.
 - **스킬을 다시 나누지 않는다.** 스킬은 `repo-setup` 하나다. 목적을 스킬로 나누면 `disable-model-invocation`
   이 진입점의 호출을 막는다(`docs/adr/0006-single-skill-with-purpose-folders.md`).
 - **스킬은 `plugin/skills/` 에 둔다.** `npx skills` 는 `.claude-plugin/marketplace.json` 의
@@ -72,8 +72,8 @@
   `script/setup` 이 된다. 이 저장소 루트의 사본도 여기서 온다.
 - `plugin/skills/repo-setup/license/scripts/` — 선언 대조기.
 - `plugin/skills/repo-setup/ci/scripts/` · `templates/` — 테스트 명령 실측기와 워크플로 골격.
-- `plugin/skills/repo-setup/secure/scripts/` · `templates/` — 워크플로 보안 검사기와 골격 둘.
-- `plugin/skills/repo-setup/contrib/scripts/` · `templates/` — 협업 파일 검사기와 문서 골격 다섯.
+- `plugin/skills/repo-setup/secure/scripts/` · `templates/` — 워크플로 보안 검사기와 골격 두 개.
+- `plugin/skills/repo-setup/contrib/scripts/` · `templates/` — 협업 파일 검사기와 문서 골격 다섯 개.
 - `script/setup` — 이 저장소의 가드를 켠다. `privacy/templates/setup` 의 사본이다.
 - `tests/` — 위 검사 명령.
 - `docs/wiki/` — 구현된 기능이 무엇을 하고 어떻게 동작하는지. 기능을 바꾸는 PR 은 그 기능의 페이지를
