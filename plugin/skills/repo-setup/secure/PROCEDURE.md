@@ -2,6 +2,27 @@
 
 대상 저장소의 보안 층을 켠다.
 
+## 카드
+
+진입점이 목적을 고르기 전에 이 카드를 보인다. `{…}` 는 진입점이 1단계에서 잰 값으로 채운다.
+
+```text
+호스트 보안 층 (secure)
+1. 무엇: GitHub 이 비밀 형식(API 키 등)을 찾는 secret scanning 과 그런 푸시를 거절하는 push
+   protection 을 켜고, 의존성 판올림(dependabot)과 코드 스캐닝(CodeQL)을 붙이고, 액션을 SHA 로 고정한다.
+2. 이유: 이 저장소는 {공개 여부}이고, 켜진 보안 기능은 {security_and_analysis}, 기존 워크플로는 {워크플로 수}개다.
+3. 바뀌는 것: GitHub 설정 secret scanning·push protection 이 enabled 가 된다. PR 과 무관하게 확인을
+   받는 즉시 적용된다. 새 파일 .github/dependabot.yml 과 .github/workflows/codeql.yml, 기존 워크플로의
+   uses: 를 SHA 로 고치는 변경(별도 커밋). 다른 사람: 비밀 형식이 든 푸시는 누구의 것이든 거절된다.
+4. 겪는 일: dependabot 이 매주 의존성을 보고 올릴 판이 있으면 PR 을 연다. CodeQL 이 기본 브랜치
+   푸시와 PR 마다, 그리고 매주 한 번 돈다.
+5. 감수할 것: 비공개 저장소의 코드 스캐닝에는 GitHub Code Security 라이선스가 필요하다. 비밀이 아닌
+   문자열이 비밀 형식으로 보여 푸시가 거절될 수 있다.
+6. 되돌리기: 설정은 절차 2단계와 같은 API 에 disabled 를 보낸다. 파일과 SHA 고정은 되돌리는 PR 로 되돌린다.
+7. 건너뛰면: 이미 푸시된 비밀과 --no-verify 로 넘긴 커밋을 잡는 층이 없고, 액션 태그가 다른 코드로
+   옮겨져도 알 수 없다.
+```
+
 ## 왜 필요한가
 
 **커밋 훅은 커밋 시점만 본다.** 이미 푸시된 것, 남이 자기 기계에서 푸시한 것, `--no-verify` 로

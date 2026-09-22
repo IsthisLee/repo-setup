@@ -126,7 +126,7 @@ plugin/skills/repo-setup/
 
 카드는 **처음 보는 사람이 읽고 결정할 수 있어야 하고**, 동시에 **실무에서 켠 뒤 겪을 일을 미리 알 수 있어야 한다.** 용어는 풀어 쓰되 내용을 얕게 만들지 않는다.
 
-카드에는 아래 일곱 칸을 이 순서로 채운다.
+카드에는 아래 일곱 칸을 이 순서로 채운다. 칸 이름은 ④ 에서 무엇, 이유, 바뀌는 것, 겪는 일, 감수할 것, 되돌리기, 건너뛰면으로 정했고, 카드는 16줄 이하다. `tests/invariants.sh` 가 이 형식을 본다.
 
 1. **무엇인가.** 한두 문장으로 쓴다. 용어가 처음 나오면 그 자리에서 뜻을 붙인다. 예: "룰셋(브랜치에 거는 규칙 묶음)".
 2. **이 저장소에서 왜.** 실측값에 근거해 쓴다. 예: "공개 저장소이고, 기존 워크플로 3개가 액션을 태그로 참조한다."
@@ -624,5 +624,6 @@ GitHub 없이 로컬 임시 저장소 넷을 만들어 privacy 만 돌린다(`/r
 | PR #1 | 병합(2026-09-22, 두 러너에서 177건 통과) | https://github.com/IsthisLee/repo-setup/pull/1 |
 | ① | 병합(2026-09-22) | https://github.com/IsthisLee/repo-setup/pull/2 |
 | ② | 병합(2026-09-22) | https://github.com/IsthisLee/repo-setup/pull/3 |
-| ③ | 열림, 두 러너 통과(2026-09-22), 병합 대기 | https://github.com/IsthisLee/repo-setup/pull/4 |
-| ④ ~ ⑭ | 대기 | |
+| ③ | 병합(2026-09-22) | https://github.com/IsthisLee/repo-setup/pull/4 |
+| ④ | 열림, 두 러너 통과(2026-09-22), 병합 대기 | https://github.com/IsthisLee/repo-setup/pull/5 |
+| ⑤ ~ ⑭ | 대기 | |

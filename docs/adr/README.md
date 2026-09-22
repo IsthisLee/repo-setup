@@ -18,3 +18,5 @@
 | 0004 | [테스트 없는 저장소에 CI 를 만들지 않는다](0004-no-ci-without-tests.md) | 승인 |
 | 0005 | [팀 저장소의 공유 자산은 제안만 한다](0005-team-repos-propose-only.md) | 승인 |
 | 0006 | [한 스킬에 목적별 폴더를 둔다](0006-single-skill-with-purpose-folders.md) | 승인 |
+| 0007 | [설명 카드로 두 번 확인받고 변경은 브랜치와 PR 로 올린다](0007-confirm-with-cards-and-deliver-by-pr.md) | 승인 |
+| 0011 | [팀 저장소에도 파일 변경은 확인 후 PR 로 올리고, 푸시할 수 없으면 패치로 물러난다](0011-team-repos-file-changes-by-pr.md) | 승인 |

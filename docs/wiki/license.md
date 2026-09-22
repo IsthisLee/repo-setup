@@ -22,7 +22,8 @@
 - `LICENSE` 가 없을 때만 새로 만든다. 이미 있으면 덮지 않는다.
 - 매니페스트(`package.json`, `pyproject.toml`, `Cargo.toml`, `plugin.json`, `marketplace.json`)의
   `license` 필드를 고른 SPDX 식별자로 맞춘다. 다른 값은 건드리지 않는다.
-- 팀 저장소에서는 파일을 만들지 않고 어긋난 곳만 보고한다.
+- 팀 저장소에서는 팀이 정한 라이선스와 저작권자를 사용자가 알려 줄 때만 파일을 만들어 세팅 PR 로 올린다.
+  알려 주지 않으면 파일을 만들지 않고 어긋난 곳만 보고한다.
 
 ## 한계와 알려진 문제
 
@@ -40,6 +41,7 @@
 
 - [0003. 겹치는 파일과 설정의 소유를 정한다](../adr/0003-ownership-of-overlapping-files.md)
 - [0005. 팀 저장소의 공유 자산은 제안만 한다](../adr/0005-team-repos-propose-only.md)
+- [0011. 팀 저장소에도 파일 변경은 확인 후 PR 로 올리고, 푸시할 수 없으면 패치로 물러난다](../adr/0011-team-repos-file-changes-by-pr.md)
 
 ## 확인한 외부 사실
 

@@ -19,9 +19,9 @@
 - `tests/ci/unit.sh` — 테스트 명령 실측기와 워크플로 골격 21건. `npm` 의 기본 자리표시자를
   테스트로 보지 않는지, 골격이 쓰기 권한을 주지 않는지 본다.
 - `tests/invariants.sh` — 매니페스트, 폴더명과 `name` 일치, 스킬 수 1, 진입점의 목적 표와 목적 폴더·
-  `PROCEDURE.md` 대조, `npx skills` 탐색 경로, `description` 병기, 자리표시자, 스킬 폴더 밖 참조,
+  `PROCEDURE.md` 대조, 절차 문서의 카드 형식, `npx skills` 탐색 경로, `description` 병기, 자리표시자, 스킬 폴더 밖 참조,
   절차 문서가 가리키는 파일, 매니페스트 description 대조, 실행 비트, 사본 일치, 템플릿 인용 대조,
-  wiki 페이지와 목차, wiki 의 경로와 ADR 링크, ADR 목록, 홈 경로 22건.  **합계 181건.**
+  wiki 페이지와 목차, wiki 의 경로와 ADR 링크, ADR 목록, 홈 경로 23건.  **합계 182건.**
 - `shellcheck -x -s bash plugin/skills/repo-setup/*/scripts/*.sh plugin/skills/repo-setup/privacy/templates/setup script/setup .githooks/* tests/*.sh tests/*/*.sh`
 - `.github/workflows/test.yml` 이 PR 과 main 푸시마다 위 테스트와 shellcheck 를 ubuntu 와 macOS 에서
   돌린다. 테스트 목록은 `.check.toml` 의 `test_command` 를 읽으므로 따로 고치지 않는다.
@@ -49,6 +49,10 @@
 - **스킬 본문은 자기 폴더만으로 완결되어야 한다.** `npx skills` 는 스킬 폴더만 복사하므로 부모
   폴더를 가리키면 깐 쪽에서 그 파일이 없다. 절차 문서, 스크립트, 템플릿을 모두 스킬 폴더 안에 두는
   이유가 이것이다.
+- **설명 카드의 문구는 각 `PROCEDURE.md` 의 첫 절 「카드」에만 둔다.** 진입점 `SKILL.md` 는 칸과 채우는
+  규칙만 갖고 문구를 옮겨 적지 않는다. 칸은 무엇, 이유, 바뀌는 것, 겪는 일, 감수할 것, 되돌리기, 건너뛰면
+  일곱 개이고 카드는 16줄 이하다. `tests/invariants.sh` 가 이 형식을 본다. 카드에 홈 경로를 글자 그대로
+  적지 않는다(가드에 걸린다). 「홈 폴더 아래 runner」처럼 풀어 쓴다.
 - **`PROCEDURE.md` 에 인자 자리표시자를 쓰지 않는다.** 절차 문서는 스킬로 불리지 않고 읽히기만 해서
   어느 에이전트에서도 치환되지 않는다. 대상은 「대상 저장소」로 적는다.
 - **`description` 에 영어와 한국어를 함께 적는다.** Claude Code 밖의 에이전트는

@@ -23,7 +23,7 @@
 - 대상 저장소에 `.github/dependabot.yml` 과 CodeQL 워크플로 `codeql.yml` 을 놓는다. 원본은
   `plugin/skills/repo-setup/secure/templates/` 에 있다.
 - 이미 있는 워크플로를 포함해 모든 워크플로의 `uses:` 를 SHA 로 바꾸고 옆에 태그를 주석으로 남긴다.
-- 팀 저장소에서는 GitHub 설정을 바꾸지 않고 제안만 한다.
+- 팀 저장소에서는 파일 변경을 세팅 PR 로 올리고, GitHub 설정은 바꾸지 않고 계획만 보인다.
 
 ## 한계와 알려진 문제
 
@@ -41,6 +41,7 @@
 
 - [0003. 겹치는 파일과 설정의 소유를 정한다](../adr/0003-ownership-of-overlapping-files.md)
 - [0005. 팀 저장소의 공유 자산은 제안만 한다](../adr/0005-team-repos-propose-only.md)
+- [0011. 팀 저장소에도 파일 변경은 확인 후 PR 로 올리고, 푸시할 수 없으면 패치로 물러난다](../adr/0011-team-repos-file-changes-by-pr.md)
 
 ## 확인한 외부 사실
 
