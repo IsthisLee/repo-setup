@@ -143,8 +143,9 @@ helper, GitHub CLI, SSH 순)을 쓴다.
 
 ### 다른 훅 관리자와 함께 쓰기
 
-`core.hooksPath` 는 값을 하나만 가진다. husky 나 lefthook 이 이미 잡고 있으면 `setup.sh` 가 **덮지 않고
-멈춘다.** 덮으면 그쪽 훅이 조용히 죽기 때문이다. 그때는 그쪽 관리자의 `pre-commit` 에 한 줄을 넣으면 둘 다 돈다.
+`core.hooksPath` 는 값을 하나만 가지고, 그 값을 걸면 git 이 `.git/hooks` 를 더는 보지 않는다. 그래서
+husky 처럼 `core.hooksPath` 를 잡은 관리자가 있거나 `.git/hooks` 에 이미 훅이 있으면 `setup.sh` 가 **덮지 않고
+멈춘다.** 덮으면 그쪽 훅이 조용히 죽기 때문이다. 그때는 그쪽 훅이 이 한 줄을 부르게 하면 둘 다 돈다.
 
 ```bash
 "$(git rev-parse --show-toplevel)"/.githooks/pre-commit || exit 1

@@ -13,7 +13,7 @@
 # 사용법:
 #   ./setup.sh                  훅을 켠다
 #   ./setup.sh --init-patterns  공용 개인 패턴 파일의 견본을 만든다(없을 때만)
-#   ./setup.sh --force          이미 다른 훅 관리자가 잡고 있어도 덮어쓴다
+#   ./setup.sh --force          이미 다른 훅이 있어도 덮어쓴다
 set -u
 
 HOOKS_DIR=.githooks
@@ -46,13 +46,34 @@ for h in "$HOOKS_DIR"/*; do
 done
 [ "$hooks" -gt 0 ] || die "${HOOKS_DIR}/ 에 훅 파일이 없다."
 
-# core.hooksPath 는 값을 하나만 가진다. 이미 다른 훅 관리자(husky·lefthook 등)가 잡고 있는데
+# core.hooksPath 는 값을 하나만 가진다. 이미 다른 훅 관리자(husky 등)가 잡고 있는데
 # 덮으면 그쪽 훅이 조용히 죽는다. 막히는 일이 없어지므로 아무도 눈치채지 못한다.
 # 실측: husky 가 잡은 저장소를 덮자 husky 의 pre-commit 이 돌지 않고 커밋이 통과했다.
+#
+# core.hooksPath 가 비어 있으면 git 은 .git/hooks 를 본다. 손으로 쓴 훅이나 그 자리에 설치된
+# 관리자의 훅이 거기 있을 수 있다. core.hooksPath 를 걸면 git 이 그 자리를 더는 보지 않으므로
+# 그 훅도 같은 식으로 죽는다. git 은 실행 비트가 있는 파일만 돌리고, .sample 은 견본이다.
+# 워크트리는 훅을 공통 폴더에서 찾으므로 --git-common-dir 을 본다.
+common=$(git rev-parse --git-common-dir) || die "git 폴더를 찾지 못했다."
+legacy=""
+for h in "$common"/hooks/*; do
+  [ -f "$h" ] || continue
+  [ -x "$h" ] || continue
+  case "$h" in *.sample) continue;; esac
+  legacy="${legacy} ${h##*/}"
+done
 existing=$(git config core.hooksPath 2>/dev/null || true)
 if [ -n "$existing" ] && [ "$existing" != "$HOOKS_DIR" ] && [ "$force" -eq 0 ]; then
   printf '%s\n' "setup: core.hooksPath 가 이미 '${existing}' 다. 덮으면 그쪽 훅이 조용히 죽는다." >&2
   printf '%s\n' "  공존하려면 그쪽 관리자의 pre-commit 에 이 한 줄을 넣어라:" >&2
+  printf '%s\n' "      \"\$(git rev-parse --show-toplevel)\"/${HOOKS_DIR}/pre-commit || exit 1" >&2
+  printf '%s\n' "  기존 훅을 버리고 덮어쓰려면: ./setup.sh --force" >&2
+  exit 1
+fi
+if [ -z "$existing" ] && [ -n "$legacy" ] && [ "$force" -eq 0 ]; then
+  printf '%s\n' "setup: ${common}/hooks 에 이미 훅이 있다:${legacy}" >&2
+  printf '%s\n' "  core.hooksPath 를 걸면 git 이 그 자리를 보지 않아 그 훅이 조용히 죽는다." >&2
+  printf '%s\n' "  공존하려면 그 훅에서 이 한 줄을 부르게 해라. 관리자가 만든 훅이면 관리자의 설정에 넣어라:" >&2
   printf '%s\n' "      \"\$(git rev-parse --show-toplevel)\"/${HOOKS_DIR}/pre-commit || exit 1" >&2
   printf '%s\n' "  기존 훅을 버리고 덮어쓰려면: ./setup.sh --force" >&2
   exit 1
@@ -64,6 +85,12 @@ git config core.hooksPath "$HOOKS_DIR" || die "core.hooksPath 설정에 실패�
 got=$(git config core.hooksPath || true)
 [ "$got" = "$HOOKS_DIR" ] || die "설정이 되읽히지 않는다(값: '${got}')."
 printf '%s\n' "core.hooksPath = ${got}  (훅 ${hooks}개)"
+
+# --force 로 덮었거나, 이 검사가 없던 때에 이미 덮인 저장소다. 설정은 그대로 두고 알린다.
+if [ -n "$legacy" ]; then
+  printf '%s\n' "주의: ${common}/hooks 의 훅은 core.hooksPath 가 걸려 있어 돌지 않는다:${legacy}" >&2
+  printf '%s\n' "  그 훅이 필요하면 'git config --unset core.hooksPath' 로 되돌리고, 그 훅에서 ${HOOKS_DIR}/pre-commit 을 부르게 해라." >&2
+fi
 
 if [ "$init_patterns" -eq 1 ] && [ ! -f "$GLOBAL_PATTERNS" ]; then
   mkdir -p "$(dirname "$GLOBAL_PATTERNS")" || die "패턴 폴더를 만들지 못했다."

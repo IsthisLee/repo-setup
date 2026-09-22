@@ -68,8 +68,10 @@ $ARGUMENTS 에 가드를 깐다(기본값은 현재 저장소). 깔고 나서 **
    `repo-setup` 이 이 스킬을 부르면서 실측값을 넘겨줬으면 **다시 재지 않는다.** 받은 값을 그대로 쓰고
    무엇을 받아 썼는지 보고에 적는다. 단독으로 불렸으면 여기서 직접 잰다.
    - `git rev-parse --show-toplevel` 로 git 저장소인지 본다. 아니면 멈춘다.
-   - `git config core.hooksPath` 를 읽는다. **이미 다른 값이 있으면 다른 훅 관리자가 잡고 있는 것이다.**
-     이 설정은 값을 하나만 가지므로 덮으면 그쪽 훅이 조용히 죽는다. 그때는 4b 로 간다.
+   - `git config core.hooksPath` 를 읽고, `.git/hooks` 에 `.sample` 이 아닌 실행 파일이 있는지 본다.
+     **둘 중 하나라도 있으면 다른 훅이 이미 돌고 있는 것이다.** `core.hooksPath` 는 값을 하나만 가지고,
+     그 값을 걸면 git 이 `.git/hooks` 를 더는 보지 않는다. 어느 쪽이든 덮으면 그쪽 훅이 조용히 죽는다.
+     그때는 4b 로 간다.
    - `git remote -v` 로 호스트를 본다. GitHub, GitLab, Bitbucket, 또는 없음. 7단계가 여기서 갈린다.
    - GitHub 원격이 있으면 한 번에 본다.
 
@@ -94,20 +96,23 @@ $ARGUMENTS 에 가드를 깐다(기본값은 현재 저장소). 깔고 나서 **
 
 4. **켠다.** 길이 둘이고, 1단계가 어느 쪽인지 알려 준다.
 
-   **4a. `core.hooksPath` 를 아무도 잡고 있지 않다.** `./setup.sh` 를 돌린다. 이 기계의 첫 저장소라면
+   **4a. 다른 훅이 없다.** `core.hooksPath` 가 비어 있고 `.git/hooks` 에도 훅이 없다. `./setup.sh` 를 돌린다. 이 기계의 첫 저장소라면
    `./setup.sh --init-patterns` 를 돌리고, 만들어진 `~/.config/git-guard/patterns` 를 **사람이 직접 채우게
    한다.** 그 파일의 내용은 절대 대신 쓰지 않는다. 무엇이 민감한지는 사람만 안다. 두 번째 저장소부터는
    공용 목록이 이미 있으므로 `./setup.sh` 만 돌리면 된다.
 
-   **4b. 다른 관리자가 잡고 있다**(husky, lefthook, pre-commit, simple-git-hooks). `--force` 를 **쓰지 말고**,
-   `core.hooksPath` 를 손으로 고치지도 않는다. 그쪽 관리자의 `pre-commit` 에 한 줄을 넣어 둘 다 돌게 한다.
+   **4b. 다른 훅이 이미 있다.** `core.hooksPath` 를 잡은 관리자(husky 등)일 수도 있고, `.git/hooks` 에 놓인
+   훅일 수도 있다. `setup.sh` 는 두 경우 모두 덮지 않고 멈춘다. `--force` 를 **쓰지 말고**, `core.hooksPath` 를
+   손으로 고치지도 않는다. 그쪽 훅이 이 한 줄을 부르게 해 둘 다 돌게 한다.
 
    ```bash
    "$(git rev-parse --show-toplevel)"/.githooks/pre-commit || exit 1
    ```
 
-   husky 라면 그 파일은 `.husky/pre-commit` 이고, lefthook 이라면 `lefthook.yml` 의 명령 항목이다. 이 길로
-   갔다는 사실과 이유를 보고에 적는다. `--force` 는 기존 관리자를 버리기로 사람이 정했을 때만 쓴다.
+   husky 라면 그 파일은 `.husky/pre-commit` 이고, lefthook 이라면 `lefthook.yml` 의 명령 항목이다.
+   `.git/hooks` 의 훅을 관리자가 만들었다면 그 파일이 아니라 관리자의 설정에 넣는다. 관리자가 훅 파일을
+   다시 만들면 손으로 넣은 줄이 사라질 수 있다. 이 길로 갔다는 사실과 이유를 보고에 적는다. `--force` 는
+   기존 훅을 버리기로 사람이 정했을 때만 쓴다.
 
 5. **막히는지 증명한다.** 설정을 걸었다고 적용된 것이 아니다. 가드가 잡아야 할 패턴으로 탐침 파일을 만들어
    스테이징하고 실제로 커밋을 시도한다. **패턴 값이 대화 기록에 남지 않도록 출력은 버리고 종료 코드만 본다.**

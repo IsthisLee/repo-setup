@@ -58,4 +58,30 @@ out=$(cd "$R4" && ./setup.sh 2>&1); r=$?; check 1 "$r" "git 저장소 아님 →
 R5="$T/badarg"; mkrepo "$R5"
 out=$(cd "$R5" && ./setup.sh --nope 2>&1); r=$?; check 1 "$r" "모르는 인자 → exit 1"
 
+# 8. .git/hooks 에 놓인 훅도 덮지 않는다. core.hooksPath 가 비어 있으면 git 은 그 자리를 보는데,
+#    core.hooksPath 를 걸면 더는 보지 않으므로 거기 있던 훅이 조용히 죽는다.
+R6="$T/legacy"; mkrepo "$R6"
+printf '%s\n' '#!/usr/bin/env bash' 'exit 1' > "$R6/.git/hooks/pre-commit"; chmod +x "$R6/.git/hooks/pre-commit"
+out=$(cd "$R6" && ./setup.sh 2>&1); r=$?
+check 1 "$r" ".git/hooks 에 훅이 있음 → exit 1 (조용히 끄지 않는다)"
+check "" "$(git -C "$R6" config core.hooksPath)" ".git/hooks 에 훅이 있음 → hooksPath 를 걸지 않는다"
+printf '%s' "$out" | grep -q '\.git/hooks.*pre-commit'; check 0 $? "차단 메시지에 찾은 훅을 보인다"
+printf '%s' "$out" | grep -q 'githooks/pre-commit || exit 1'; check 0 $? "차단 메시지에 공존하는 법을 보인다"
+printf '%s' "$out" | grep -q '\-\-force'; check 0 $? "차단 메시지에 덮어쓰는 법을 보인다"
+R7="$T/legacy-noexec"; mkrepo "$R7"
+printf '%s\n' '#!/usr/bin/env bash' 'exit 1' > "$R7/.git/hooks/pre-commit"; chmod -x "$R7/.git/hooks/pre-commit"
+(cd "$R7" && ./setup.sh >/dev/null 2>&1); check 0 $? "실행 비트 없는 .git/hooks 훅 → exit 0 (git 도 돌리지 않는다)"
+out=$(cd "$R6" && ./setup.sh --force 2>&1); check 0 $? ".git/hooks 훅 + --force → exit 0"
+check ".githooks" "$(git -C "$R6" config core.hooksPath)" ".git/hooks 훅 + --force → 건다"
+printf '%s' "$out" | grep -q '돌지 않는다'; check 0 $? "--force 뒤에 돌지 않게 된 훅을 알린다"
+out=$(cd "$R6" && ./setup.sh 2>&1); check 0 $? "이미 .githooks 이고 .git/hooks 에 훅 → exit 0 (멱등)"
+printf '%s' "$out" | grep -q '돌지 않는다'; check 0 $? "이미 덮인 저장소에서 돌지 않는 훅을 알린다"
+R8="$T/wt-main"; mkrepo "$R8"
+git -C "$R8" add -A; git -C "$R8" -c commit.gpgsign=false commit -q -m init
+git -C "$R8" worktree add -q "$T/wt-side" 2>/dev/null
+printf '%s\n' '#!/usr/bin/env bash' 'exit 1' > "$R8/.git/hooks/pre-commit"; chmod +x "$R8/.git/hooks/pre-commit"
+# cd 가 실패해도 1 이 나오므로 종료 코드만으로는 모자란다. 차단 문구까지 본다.
+out=$(cd "$T/wt-side" && ./setup.sh 2>&1); r=$?
+check "1 1" "$r $(printf '%s' "$out" | grep -c '이미 훅이 있다')" "링크된 워크트리 → 공통 폴더의 훅을 찾아 exit 1"
+
 echo; echo "실패 ${fail}건"; exit "$fail"
