@@ -40,12 +40,14 @@
 | 13 | 호환성 | `breaking` 라벨을 만들어 ③ 에 붙이고, 두 매니페스트를 0.2.0 으로 올린다. README 에 이전 판에서 옮겨 오는 방법을 적는다 |
 | 14 | PR 분할 | 기능별로 나눈다(4절, 12개). squash 병합이므로 PR 하나가 main 의 커밋 하나가 된다. 처음에는 10개였고, 두 번째 인터뷰에서 확인 흐름과 변경 전달(④)이, 세 번째 인터뷰에서 ADR 전환(②)이 더해졌다 |
 | 15 | 종단 검증 | 공개 임시 저장소 둘(처음 세팅하는 저장소, 활발한 저장소를 흉내 낸 저장소)과 이 저장소에서 한다(8절) |
-| 16 | 스펙 위치와 수명 | 이 파일은 저장소 루트의 `SPEC.md` 이고 ① 과 함께 커밋한다. 파일 이름에 날짜를 넣지 않는다(날짜는 git 이력과 이 문서 첫 줄에 있다). 진행 중인 계획만 담는 임시 문서라서, 각 PR 이 자기가 실행한 결정을 ADR 로 옮기고(결정 21), 마지막 PR ⑫ 에서 2절의 결정이 모두 ADR 이나 코드·테스트로 옮겨졌는지 확인한 뒤 이 파일을 지운다 |
+| 16 | 스펙 위치와 수명 | 이 파일은 저장소 루트의 `SPEC.md` 이고 ① 과 함께 커밋한다. 파일 이름에 날짜를 넣지 않는다(날짜는 git 이력과 이 문서 첫 줄에 있다). 진행 중인 계획만 담는 임시 문서다. 각 PR 은 구현한 기능의 무엇·어떻게를 wiki 페이지에(결정 22), 왜를 ADR 에(결정 21) 같은 PR 안에서 옮긴다. 마지막 PR ⑫ 에서 2절의 결정이 모두 wiki, ADR, 코드·테스트 중 한 곳으로 옮겨졌는지 확인한 뒤 이 파일을 지운다 |
 | 17 | 확인 흐름 | 두 층으로 받는다. 먼저 실측 결과와 함께 목적마다 설명 카드를 보여 주고 적용할 목적을 고르게 한다. 그다음 고른 목적 안에서 부작용이 있는 단계마다 다시 확인받는다. 설명 카드는 처음 보는 사람도 이해할 수 있게 쓰되 실무적인 깊이를 갖춘다(3.2.2) |
 | 18 | 변경 전달 | 작업 트리에 추적 파일의 변경이 있으면 시작하지 않는다. 기본 브랜치의 최신 상태에서 `repo-setup/<YYYY-MM-DD>` 브랜치를 만들어 목적마다 커밋하고, PR 하나로 올린다. main 에는 직접 커밋하지 않는다. GitHub 설정은 확인을 받은 뒤 API 로 바꾸고, 룰셋은 세팅 PR 이 병합된 뒤에 건다(3.2.3) |
 | 19 | 필수 검사 선택 | 실제 실행에서 읽은 check 를 모두 보여 주고, 각각이 어느 워크플로의 것인지와 그 워크플로에 `paths`·`paths-ignore`·`branches` 필터나 job `if` 조건이 있는지를 표시한다. 필터나 조건이 있는 check 는 기본으로 빼 두고, 사람이 필수로 둘 것을 고른다. 걸기 전에 열린 PR 가운데 멈출 PR 과, PR 없이 main 에 들어온 최근 커밋을 보고한다 |
 | 20 | zizmor 기존 발견 | 처음 검사의 발견을 규칙별로 묶어 보여 주고, 에이전트가 고칠 것과 사람이 판단할 것으로 나눈다. 고칠 것은 고치고, 남길 것은 `zizmor.yml` 에 이유 주석과 함께 예외로 적는다. 로컬 검사가 0건이 된 뒤에만 차단하는 zizmor 워크플로를 놓는다. 기존 워크플로를 고치는 변경은 세팅 PR 안에서 별도 커밋으로 두고, 고친 파일과 줄 수를 보고한다 |
-| 21 | 설계 근거의 자리 | `docs/decisions.md` 를 결정 하나에 파일 하나인 ADR 로 나눈다(3.10). 실행 규칙(선택 조건, 순서)은 `SKILL.md` 한 곳에만 두고, ADR 에는 "왜"만 둔다. `docs/decisions.md` 는 ② 에서 지운다 |
+| 21 | 설계 근거의 자리 | `docs/decisions.md` 를 결정 하나에 파일 하나인 ADR(`docs/adr/`)로 나눈다(3.10). 실행 규칙(선택 조건, 순서)은 `SKILL.md` 한 곳에만 두고, ADR 에는 "왜"만 둔다. `docs/decisions.md` 는 ② 에서 지운다 |
+| 22 | 구현된 기능의 설명 | `docs/wiki/` 에 기능마다 페이지를 두고, 지금 구현된 것이 무엇을 하고 어떻게 동작하며 무엇을 바꾸고 어디까지 못 하는지 적는다. 이유는 쓰지 않고 해당 ADR 을 링크한다. 세팅 중에 사용자에게 보이는 카드 문구는 `PROCEDURE.md` 가 정본이고, wiki 는 그것을 옮겨 적지 않고 링크한다(3.11) |
+| 23 | README | 무엇인지, 설치, 첫 실행, 목적 다섯의 한 줄 요약, wiki 로 가는 링크만 남기고 100줄 안팎으로 줄인다. 기능의 세부는 wiki 에만 둔다 |
 
 ## 3. 목표 구조와 인터페이스
 
@@ -307,7 +309,7 @@ main 보호 (룰셋)
   - 루트 사본이 새 경로의 템플릿과 같아야 한다.
   - 본문이 `../` 나 저장소 루트의 `docs/` 를 가리키면 안 된다. 지금 검사는 `../` 만 보아서 `docs/decisions.md` 참조를 놓친다.
   - 매니페스트 description 대조는 유지한다.
-- ③: CLAUDE.md 의 구조 절과 shellcheck 글롭, README 를 새 구조로 고친다. ADR 0006 을 더하고 0002 를 superseded 로 표시한다(3.10). 각 목적의 세부 문서는 그 목적의 PR 에서 고친다.
+- ③: CLAUDE.md 의 구조 절과 shellcheck 글롭, README 의 설치 경로, wiki 페이지의 관련 파일 경로를 새 구조로 고친다. ADR 0006 을 더하고 0002 를 superseded 로 표시한다(3.10). 각 목적의 세부 문서는 그 목적의 PR 에서 고친다.
 
 ### 3.10 ADR (결정 21)
 
@@ -348,13 +350,45 @@ main 보호 (룰셋)
   - 0011 이 0005 를 고치는 방식: 0005 의 상태는 `승인` 으로 두고, 0011 의 맥락에서 0005 를 가리키며 "파일 변경은 PR 로 올려도 되고, GitHub 설정은 여전히 제안만 한다"고 좁힌다.
   - 나머지 결정(10~16)은 코드와 테스트, CLAUDE.md, 매니페스트에 이미 드러나므로 ADR 로 옮기지 않는다. ⑫ 에서 이 판정을 다시 확인한다.
 
+### 3.11 wiki 와 README (결정 22, 23)
+
+- **네 문서의 역할.** Diátaxis 의 네 문서 종류(6절의 출처 13)에 대응시켜 나눈다. 한 사실은 한 문서에만 둔다.
+
+| 문서 | 담는 것 | Diátaxis |
+|---|---|---|
+| `README.md` | 무엇인지, 설치, 첫 실행, 목적 다섯의 한 줄 요약, wiki 링크 | tutorial |
+| `PROCEDURE.md` 의 카드 | 세팅 중에 사용자에게 보이는 설명(3.2.2) | how-to |
+| `docs/wiki/*.md` | 구현된 기능이 무엇을 하고 어떻게 동작하는지 | reference |
+| `docs/adr/*.md` | 왜 그렇게 만들었는지, 버린 대안 | explanation |
+
+- **페이지.** `docs/wiki/README.md`(목차)와 기능 페이지 일곱이다. 이름은 스킬 구조와 무관한 목적 이름으로 정해, ③ 에서 폴더가 바뀌어도 페이지 이름은 그대로 둔다.
+  - `privacy.md`, `license.md`, `ci.md`, `secure.md`, `contrib.md`
+  - `setup-flow.md`: 진입점의 실측, 확인 흐름, 변경 전달
+  - `development.md`: 이 저장소의 구조, 테스트, 자체 CI, 기여 방법
+- **페이지의 절.** 순서대로 다음과 같다.
+  1. 무엇을 하나(두세 문장)
+  2. 어떻게 동작하나(트리거에서 결과까지 단계별)
+  3. 무엇을 바꾸나(파일, GitHub 설정, 다른 사람에게 미치는 영향)
+  4. 한계와 알려진 문제
+  5. 관련 파일(저장소 경로)
+  6. 관련 ADR(번호와 제목 링크)
+  7. 확인한 외부 사실(출처와 확인일. 전역 규칙에 따라 링크한 문서를 열어 확인한 것만 적는다)
+- **쓰지 않는 것.** 이유는 ADR 링크로만 둔다. 카드 문구와 실행 규칙(선택 조건, 순서)은 옮겨 적지 않고 `PROCEDURE.md` 와 `SKILL.md` 를 링크한다. 앞으로 할 계획은 쓰지 않는다. 계획은 SPEC.md 에만 둔다.
+- **갱신.** 기능을 바꾸는 PR 은 그 기능의 wiki 페이지를 같은 PR 에서 고친다. 코드와 설명이 같은 리뷰를 거치게 하려는 것이다.
+- **낡음을 막는 검사.** ② 에서 `tests/invariants.sh` 에 다음을 더한다.
+  - 목적마다 `docs/wiki/<목적>.md` 가 있고, `docs/wiki/README.md` 가 모든 페이지를 가리킨다.
+  - wiki 페이지에 백틱으로 적힌 저장소 경로(`plugin/`, `tests/`, `docs/`, `.githooks/` 로 시작하는 것)가 실제로 있다.
+  - wiki 페이지가 가리키는 ADR 번호의 파일이 `docs/adr/` 에 있다.
+  - `docs/adr/README.md` 가 모든 ADR 을 가리킨다.
+- **README.** 목표는 100줄 안팎이다. 지금 README 의 스킬별 절은 ② 에서 해당 wiki 페이지로 **옮기기만** 한다. 옮기면서 내용을 고치지 않는다. 낡은 문장(예: "Skills (2)")은 README 에 남는 부분이면 ② 에서 고치고, wiki 로 옮긴 부분이면 그 기능의 PR 이나 ⑫ 에서 고친다.
+
 ## 4. PR 순서
 
 | # | 제목 | 라벨 | 선행 | 완료 조건 |
 |---|---|---|---|---|
 | ① | `ci: 테스트와 shellcheck 를 ubuntu 와 macOS 에서 돌린다` | 없음(`ci` 에 맞는 라벨이 없다. PR 본문에 적는다) | 없음 | 두 러너에서 초록. 이 스펙 문서 포함 |
-| ② | `docs(adr): decisions.md 를 결정별 ADR 로 나눈다` | `documentation` | 없음 | 3.10 의 0001~0005 와 `docs/adr/README.md`. `docs/decisions.md` 삭제. `CLAUDE.md:6` 이 `docs/adr/` 를 가리키게 고침. `repo-setup/SKILL.md:92` 의 `docs/decisions.md` 참조 삭제. 내용을 새로 쓰지 않고 옮기기만 한다 |
-| ③ | `refactor(skill)!: 좁은 스킬 다섯을 repo-setup 의 목적별 폴더로 합친다` | `breaking`(새로 만든다) | PR #1, ①, ② | 동작 변화 없이 파일 이동, frontmatter, 진입점, invariants, 문서, 0.2.0. ADR 0006. 기계적 이동과 내용 변경을 섞지 않는다 |
+| ② | `docs: 문서를 README·wiki·ADR 로 나눈다` | `documentation` | 없음 | 3.10 의 ADR 0001~0005 와 `docs/adr/README.md`. 3.11 의 `docs/wiki/` 페이지와 목차. README 를 100줄 안팎으로 줄임. `docs/decisions.md` 삭제. `CLAUDE.md:6` 이 `docs/wiki/` 와 `docs/adr/` 를 가리키게 고침. `repo-setup/SKILL.md:92` 의 `docs/decisions.md` 참조 삭제. invariants 의 wiki·ADR 검사. 내용을 새로 쓰지 않고 옮기기만 한다 |
+| ③ | `refactor(skill)!: 좁은 스킬 다섯을 repo-setup 의 목적별 폴더로 합친다` | `breaking`(새로 만든다) | PR #1, ①, ② | 동작 변화 없이 파일 이동, frontmatter, 진입점, invariants, 문서, 0.2.0. ADR 0006. wiki 페이지의 관련 파일 경로 갱신. 기계적 이동과 내용 변경을 섞지 않는다 |
 | ④ | `feat(setup): 목적마다 설명 카드로 확인받고 변경을 브랜치와 PR 로 올린다` | `enhancement` | ③ | 3.2 의 공통 실측 추가, 3.2.1~3.2.3. 다섯 PROCEDURE.md 에 「카드」 절(각 목적 PR 에서 내용을 다듬는다). ADR 0007, 0011 |
 | ⑤ | `fix(privacy): 추가된 줄만 검사하고 공용 계정 경로를 막지 않는다` | `bug` | ③ | 3.3 의 ⑤ |
 | ⑥ | `feat(privacy): 커밋 메시지도 가드가 검사한다` | `enhancement` | ③ | 3.3 의 ⑥ |
@@ -363,9 +397,10 @@ main 보호 (룰셋)
 | ⑨ | `fix(license): 알아보지 못한 본문에 이름을 붙이지 않는다` | `bug` | ③ | 3.4 |
 | ⑩ | `fix(ci): 테스트가 실제로 돈 것을 보고 워크플로를 놓는다` | `bug` | ④ | 3.5 |
 | ⑪ | `feat(contrib)!: 브랜치 보호를 룰셋으로 옮기고 골격 셋을 뺀다` | `enhancement`, `breaking` | ⑩ | 3.7, 3.8. ADR 0010 |
-| ⑫ | `docs: 구조 변경을 마무리하며 낡은 문서를 정리한다` | `documentation` | ①~⑪ 모두 | CLAUDE.md 의 테스트 건수와 낡은 문장(예: "repo-privacy 가 템플릿 둘을 본문에 품는다") 제거. 2절의 결정이 모두 ADR 이나 코드·테스트로 옮겨졌는지 표로 확인한 뒤 SPEC.md 삭제 |
+| ⑫ | `docs: 구조 변경을 마무리하며 낡은 문서를 정리한다` | `documentation` | ①~⑪ 모두 | CLAUDE.md 의 테스트 건수와 낡은 문장(예: "repo-privacy 가 템플릿 둘을 본문에 품는다") 제거. 2절의 결정이 모두 wiki, ADR, 코드·테스트 중 한 곳으로 옮겨졌는지 표로 확인한 뒤 SPEC.md 삭제. wiki 페이지가 모두 지금 구현과 맞는지 확인 |
 
 - 모든 PR 은 저장소 규칙대로 **테스트를 먼저 쓰고 RED 를 확인한 뒤** 구현한다.
+- ③ 부터 기능을 바꾸는 PR 은 그 기능의 `docs/wiki/` 페이지를 같은 PR 에서 고친다(3.11). 표의 "ADR" 은 그 PR 이 더하는 ADR 이다.
 - PR 본문은 main 에 그대로 남을 글로 쓴다. 제목은 `type(scope): 요약` 이다.
 - ② 는 ③ 보다 먼저 병합한다. ③ 이 0002 를 대체하는 ADR 을 더하기 때문이다. ⑧·⑩ 은 ④ 뒤에 온다. 카드와 확인 흐름, 세팅 PR 에서 CI 를 돌리는 방식이 ④ 에서 정해지기 때문이다. ⑤·⑥·⑦·⑨ 는 ③ 뒤라면 서로 순서가 없다. ⑫ 는 맨 마지막이다.
 
@@ -400,6 +435,8 @@ main 보호 (룰셋)
     - 그 뒤 `gh repo edit --visibility public` 으로 공개로 바꿨다. 공개하기 전에 전체 이력(커밋 17개)에서 홈 경로, 흔한 비밀 형식, `.private/`, 개인 패턴이 추가된 줄이 모두 0건임을 확인했다.
 11. **공식 문서가 아닌 원전**, Michael Nygard, [Documenting Architecture Decisions](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions)(2011): 절은 Title, Context, Decision, Status, Consequences 다섯이다. "ADRs will be numbered sequentially and monotonically. Numbers will not be reused."(번역: ADR 은 차례대로, 줄어들지 않게 번호를 매긴다. 번호는 다시 쓰지 않는다.) "If a decision is reversed, we will keep the old one around, but mark it as superseded."(번역: 결정이 뒤집히면 옛것을 지우지 않고 대체됐다고 표시한다.) 상태는 proposed, accepted, deprecated, superseded 넷이다.
 12. **공식 문서**, Claude Code [Best practices](https://code.claude.com/docs/en/best-practices): 인터뷰 프롬프트 예시가 "write a complete spec to SPEC.md"(번역: 완전한 스펙을 SPEC.md 에 써라)로 끝나고, "Once the spec is complete, start a fresh session to execute it."(번역: 스펙이 완성되면 그것을 실행할 새 세션을 시작하라.)라고 적혀 있다. 스펙 파일을 끝난 뒤 어떻게 할지는 다루지 않는다. 그래서 결정 16 의 "끝나면 지운다"는 이 저장소가 정한 규칙이다.
+13. **공식 문서가 아닌 원전**, [Diátaxis](https://diataxis.fr/): "Diátaxis identifies four distinct needs, and four corresponding forms of documentation"(번역: Diátaxis 는 서로 다른 네 가지 필요와 그에 대응하는 네 가지 문서 형태를 구별한다). 네 형태는 tutorials(배우기 위한 문서), how-to guides(과제를 이루기 위한 문서), reference(찾아보기 위한 문서), explanation(이해를 깊게 하기 위한 문서)다.
+14. **공식 문서**, GitHub [Adding or editing wiki pages](https://docs.github.com/en/communities/documenting-your-project-with-wikis/adding-or-editing-wiki-pages): GitHub 의 Wiki 기능은 `git clone https://github.com/YOUR-USERNAME/YOUR-REPOSITORY.wiki.git` 으로 받는 별도 저장소이고, 기본 브랜치에 푸시한 변경이 바로 반영된다. PR 을 거친다는 설명은 없다. 그래서 설계 문서는 GitHub Wiki 가 아니라 저장소 안 `docs/wiki/` 에 둔다. 코드와 같은 PR 에서 리뷰되고, 작업 트리에서 일하는 에이전트와 invariants 가 볼 수 있어야 하기 때문이다.
 
 ## 7. 구현 전에 확인할 것 (아직 확인하지 않음)
 
