@@ -22,8 +22,9 @@
 
 - 해당하는 골격만 놓는다. `SECURITY.md`, `CONTRIBUTING.md`, PR 서식, 버그 신고 서식, `CODEOWNERS` 이고,
   원본은 `plugin/skills/repo-setup/contrib/templates/` 에 있다.
-- GitHub 설정: 기본 브랜치 보호(`gh api -X PUT repos/OWNER/REPO/branches/BRANCH/protection`).
-- 팀 저장소에서는 브랜치 보호를 걸지 않고 제안만 한다.
+- GitHub 설정: 기본 브랜치 보호(`gh api -X PUT repos/OWNER/REPO/branches/BRANCH/protection`). 세팅 PR 이
+  병합된 뒤에 `/repo-setup:repo-setup contrib` 를 다시 불러 건다.
+- 팀 저장소에서는 협업 파일을 세팅 PR 로 올리고, 브랜치 보호는 걸지 않고 계획만 보인다.
 
 ## 한계와 알려진 문제
 
@@ -40,6 +41,7 @@
 
 - [0003. 겹치는 파일과 설정의 소유를 정한다](../adr/0003-ownership-of-overlapping-files.md)
 - [0005. 팀 저장소의 공유 자산은 제안만 한다](../adr/0005-team-repos-propose-only.md)
+- [0011. 팀 저장소에도 파일 변경은 확인 후 PR 로 올리고, 푸시할 수 없으면 패치로 물러난다](../adr/0011-team-repos-file-changes-by-pr.md)
 
 ## 확인한 외부 사실
 

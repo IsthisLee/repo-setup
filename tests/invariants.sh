@@ -52,6 +52,36 @@ ROUTE
 then ok "진입점의 목적 표가 목적 폴더와 같고 폴더마다 PROCEDURE.md 가 있다"
 else bad "진입점의 목적 표가 실제와 다르거나 PROCEDURE.md 가 빠졌다"; fi
 
+# 진입점은 목적을 고르기 전에 절차 문서의 카드에 실측값을 채워 보인다. 칸이 빠지면 사람이 그것을
+# 모른 채 동의하고, 카드가 길어지면 읽히지 않는다. 카드는 절차 문서의 첫 절이고 일곱 칸을 이 순서로 둔다.
+if python3 - "$SK" <<'CARD'
+import pathlib, re, sys
+sk = pathlib.Path(sys.argv[1])
+labels = ["무엇", "이유", "바뀌는 것", "겪는 일", "감수할 것", "되돌리기", "건너뛰면"]
+bad = []
+for proc in sorted(sk.glob("*/PROCEDURE.md")):
+    name = proc.parent.name
+    text = proc.read_text(encoding="utf-8")
+    sections = re.findall(r"^## (.+)$", text, re.M)
+    if not sections or sections[0] != "카드":
+        bad.append(f"{name}(첫 절이 「카드」가 아니다)"); continue
+    body = text.split("\n## 카드\n", 1)[1].split("\n## ", 1)[0]
+    m = re.search(r"^```text\n(.*?)^```$", body, re.M | re.S)
+    if not m:
+        bad.append(f"{name}(카드 코드 블록이 없다)"); continue
+    lines = m.group(1).rstrip("\n").split("\n")
+    found = [re.match(r"^(\d)\. ([^:]+):", l) for l in lines]
+    got = [(f.group(1), f.group(2)) for f in found if f]
+    want = [(str(i + 1), l) for i, l in enumerate(labels)]
+    if got != want:
+        bad.append(f"{name}(칸이 {[g[1] for g in got]})")
+    if len(lines) > 16:
+        bad.append(f"{name}(카드가 {len(lines)}줄)")
+assert not bad, "카드가 규칙과 다르다: " + ", ".join(bad)
+CARD
+then ok "절차 문서마다 첫 절이 일곱 칸을 갖춘 16줄 이하의 카드다"
+else bad "절차 문서의 카드가 빠졌거나 칸이 다르다"; fi
+
 # npx skills 는 마켓플레이스의 source 아래 skills/ 를 탐색 경로에 더한다(CLI 1.7.0 의
 # getPluginSkillPaths). 스킬을 그 밖으로 옮기면 Claude Code 에서는 계속 동작하면서
 # 다른 에이전트에서만 조용히 사라진다.

@@ -57,7 +57,8 @@ husky 처럼 `core.hooksPath` 를 잡은 관리자가 있거나 `.git/hooks` 에
   사람에게 전달되지 않는다.
 - `.gitignore` 에 `.private/` 한 줄을 더한다.
 - `script/setup --init-patterns` 는 `~/.config/git-guard/patterns` 견본을 만든다(없을 때만).
-- 팀 저장소에서는 `.gitignore` 와 규칙 문서를 고치지 않고 제안만 한다.
+- 팀 저장소에서도 `.gitignore` 와 규칙 문서의 변경은 확인을 받은 뒤 세팅 PR 로 올리고, 병합은 팀이 정한다.
+  저장소 보안 설정은 바꾸지 않는다.
 
 ## 한계와 알려진 문제
 
@@ -78,6 +79,7 @@ husky 처럼 `core.hooksPath` 를 잡은 관리자가 있거나 `.git/hooks` 에
 - [0001. 저장소 층만 다룬다](../adr/0001-repository-layer-only.md)
 - [0003. 겹치는 파일과 설정의 소유를 정한다](../adr/0003-ownership-of-overlapping-files.md)
 - [0005. 팀 저장소의 공유 자산은 제안만 한다](../adr/0005-team-repos-propose-only.md)
+- [0011. 팀 저장소에도 파일 변경은 확인 후 PR 로 올리고, 푸시할 수 없으면 패치로 물러난다](../adr/0011-team-repos-file-changes-by-pr.md)
 
 ## 확인한 외부 사실
 
