@@ -72,6 +72,33 @@ URL 에 이미 설정된 인증(git credential helper, GitHub CLI, SSH 순)을 �
 2026-09-18, 상태 OPEN). **1.7.0 에서는 위 네 형태 모두 Claude Code 가 읽는 자리에 스킬이
 놓였습니다.** 이슈가 적은 재현 형태(`-g -a claude-code`)도 그랬습니다.
 
+## 0.1 판에서 옮겨 오기
+
+0.2.0 부터 스킬은 `repo-setup` 하나입니다. `/repo-setup:repo-privacy` 같은 목적별 커맨드는 사라졌고,
+`/repo-setup:repo-setup privacy` 처럼 진입점에 목적 이름을 줍니다.
+
+**Claude Code 플러그인**으로 설치했으면 업데이트한 뒤 Claude Code 를 다시 시작합니다.
+
+```
+claude plugin marketplace update repo-setup
+claude plugin update repo-setup@repo-setup
+```
+
+업데이트하면 `claude plugin details repo-setup` 에 스킬 하나만 나옵니다. 0.1.0 의 캐시 폴더
+(`~/.claude/plugins/cache/repo-setup/repo-setup/0.1.0/`)는 디스크에 남습니다.
+
+**`skills` CLI** 로 설치했으면 새 판을 받은 뒤 옛 스킬 다섯을 지웁니다. 새 판을 받아도 옛 스킬 폴더와
+`skills-lock.json` 의 항목은 지워지지 않습니다. 전역으로 설치했으면 두 명령에 모두 `-g` 를 붙입니다.
+
+```bash
+npx skills@latest add IsthisLee/repo-setup
+npx skills@latest remove repo-privacy repo-license repo-ci repo-secure repo-contrib -y
+```
+
+**이미 가드를 설치한 저장소**의 `setup.sh` 는 그대로 동작합니다. 0.2.0 은 같은 스크립트를 `script/setup` 에
+놓습니다. 옮기려면 `mkdir -p script && git mv setup.sh script/setup` 을 돌리고, 그 저장소 문서의
+`./setup.sh` 를 `script/setup` 으로 고칩니다.
+
 ## 목적 다섯
 
 | 목적 | 인자 | 하는 일 |
