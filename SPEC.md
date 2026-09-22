@@ -327,7 +327,9 @@ main 보호 (룰셋)
 - ①: `.github/workflows/test.yml`
   - 트리거는 `pull_request` 와 main 푸시이고, matrix 는 `ubuntu-latest` 와 `macos-latest` 다.
   - `concurrency` 는 `cancel-in-progress: true` 이고, `permissions` 는 `contents: read` 이며, 액션은 SHA 로 고정한다.
-  - 단계는 checkout, shellcheck 준비(러너별 설치 방법은 7절에서 확인), `.check.toml` 의 `test_command`, CLAUDE.md 의 shellcheck 명령 순서다.
+  - 단계는 checkout, shellcheck 준비, `.check.toml` 의 `test_command`, CLAUDE.md 의 shellcheck 명령 순서다.
+  - shellcheck 는 두 러너 모두 공식 릴리스 v0.11.0 을 받아 sha256 으로 확인한다. ubuntu 러너에 깔린 판(0.9.0)과 로컬 판이 달라서 러너마다 경고가 달라지지 않게 하려는 것이다(6절의 출처 20).
+  - 테스트 목록은 `.check.toml` 의 줄을 실행할 때 읽는다. shellcheck 명령은 워크플로에 적혀 있으므로 CLAUDE.md 의 줄과 두 곳에 있다.
 - ⑩ 뒤: 자체 CI 에 zizmor job 을 더한다. 대상은 이 저장소의 `.github/workflows/` 다.
 - ③: `tests/invariants.sh` 를 새 구조에 맞춘다.
   - 스킬 수는 1이다.
@@ -338,7 +340,7 @@ main 보호 (룰셋)
   - 루트 사본이 새 경로의 템플릿과 같아야 한다.
   - 본문이 `../` 나 저장소 루트의 `docs/` 를 가리키면 안 된다. 지금 검사는 `../` 만 보아서 `docs/decisions.md` 참조를 놓친다.
   - 매니페스트 description 대조는 유지한다.
-- ③: CLAUDE.md 의 구조 절과 shellcheck 글롭, README 의 설치 경로, wiki 페이지의 관련 파일 경로를 새 구조로 고친다. ADR 0006 을 더하고 0002 를 superseded 로 표시한다(3.10). 각 목적의 세부 문서는 그 목적의 PR 에서 고친다.
+- ③: CLAUDE.md 의 구조 절과 shellcheck 글롭(`.github/workflows/test.yml` 의 shellcheck 줄도 같이), README 의 설치 경로, wiki 페이지의 관련 파일 경로를 새 구조로 고친다. ADR 0006 을 더하고 0002 를 superseded 로 표시한다(3.10). 각 목적의 세부 문서는 그 목적의 PR 에서 고친다.
 
 ### 3.10 ADR (결정 21)
 
@@ -483,6 +485,7 @@ main 보호 (룰셋)
 17. **공식 문서**, [pre-commit](https://pre-commit.com/): 클론한 뒤 각자 `pre-commit install` 을 실행해야 하고, 이를 자동으로 하려면 `git config --global init.templateDir ~/.git-template` 와 `pre-commit init-templatedir ~/.git-template` 를 쓰라고 안내한다. 로컬 훅은 `repo: local` 로 정의하고 bash 스크립트의 `language` 는 `unsupported_script` 다. `default_install_hook_types: [pre-commit, commit-msg]` 나 `pre-commit install --hook-type commit-msg` 로 commit-msg 단계를 켠다.
 18. **공식 문서**, [lefthook](https://lefthook.dev/): 언어와 무관한 단일 실행 파일이고 npm, pip, gem, go, Homebrew 등으로 설치한다. `lefthook install` 이 "installs the configured hooks into `.git/hooks/`"(번역: 설정한 훅을 `.git/hooks/` 에 설치한다). npm 으로 설치할 때 `lefthook install` 이 자동으로 도는지는 이 문서에서 확인하지 못했다.
 19. **실측**, git 2.53.0 의 `man githooks` 와 `man git-init`: 훅은 `$GIT_DIR/hooks` 나 `core.hooksPath` 가 가리키는 폴더에서만 찾는다. `git init`(과 `git clone`)은 템플릿 폴더의 파일을 새 `$GIT_DIR` 로 복사하고, 템플릿 폴더는 `--template`, `$GIT_TEMPLATE_DIR`, `init.templateDir`, 기본 폴더 순으로 정해진다. "Running git init in an existing repository is safe. It will not overwrite things that are already there."(번역: 이미 있는 저장소에서 git init 을 실행해도 안전하다. 이미 있는 것을 덮어쓰지 않는다.) 설정만으로 훅을 거는 `hook.<이름>.command` 는 이 판의 `man git-config` 에서 찾지 못했다. 그래서 클론만으로 저장소 안의 훅이 켜지는 구성은 없고, 켜는 단계가 어딘가에 반드시 있다.
+20. **공개 저장소**, GitHub [actions/runner-images](https://github.com/actions/runner-images): README 의 표에서 `ubuntu-latest` 는 Ubuntu 24.04(x64)이고 `macos-latest` 는 macOS 26 Arm64 다. `images/ubuntu/Ubuntu2404-Readme.md` 에는 Bash 5.2.21 과 apt 패키지 `shellcheck` `0.9.0-1` 이 있다. `images/macos/macos-26-arm64-Readme.md` 에는 Bash 3.2.57 이 있고 shellcheck 는 없다. 그리고 **실측**으로, shellcheck 공식 릴리스 v0.11.0 의 `linux.x86_64`·`darwin.aarch64` tar.gz 자산을 받아 잰 sha256 이 릴리스 API 의 `digest` 값과 같았다.
 
 ## 7. 구현 전에 확인할 것 (아직 확인하지 않음)
 
@@ -492,7 +495,6 @@ main 보호 (룰셋)
 - secret scanning: 쓸 수 없는 저장소에서 `PATCH` 가 내는 상태 코드와 메시지, push protection 이 동료의 푸시를 거절할 때의 메시지.
 - dependabot: 생태계마다 한 번에 여는 PR 수의 기본 상한.
 - GitHub 라이선스 템플릿: 지원할 키마다의 자리표시자 목록(`[year]`, `[fullname]` 외).
-- macOS 러너와 ubuntu 러너에 shellcheck 가 미리 깔려 있는지, 없으면 설치 방법.
 - 이전 판에서 옮겨 오기: 플러그인으로 설치한 경우 업데이트할 때 옛 스킬이 사라지는지, `npx skills` 로 설치한 경우 옛 스킬 폴더를 지우는 명령.
 - husky: 지금 판의 설치 명령과 `.husky/` 훅 파일 형식, `husky` 가 `core.hooksPath` 를 쓰는지(공식 문서에서는 확인하지 못했고, 이 저장소 `setup.sh` 주석의 실측 기록만 있다), `HUSKY=0` 의 동작, git 저장소 밖에서 `npm install` 할 때의 동작.
 - pre-commit 프레임워크: `repo: local` 훅의 `language` 값(2026-09-22 문서에서는 `unsupported_script`), commit-msg 단계에 걸 때의 `stages` 값, 커밋할 때 스테이징하지 않은 변경을 잠시 치웠다 되돌리는 동작이 가드의 인덱스 검사와 부딪히지 않는지.
