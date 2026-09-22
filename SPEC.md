@@ -1,7 +1,7 @@
 # 스펙: 스킬을 하나로 합치고 추정기를 검증된 도구로 바꾼다
 
 - 상태: 확정(2026-09-22 인터뷰 두 차례). 구현은 새 세션에서 4절의 PR 순서대로 한다.
-- 선행: PR #1 `fix(privacy): 가드가 조용히 꺼지는 경로 넷을 막는다` 가 main 에 병합돼 있어야 ② 부터 시작할 수 있다. ② 가 repo-privacy 파일을 옮기므로, PR #1 보다 먼저 병합하면 충돌한다.
+- 선행: PR #1 `fix(privacy): 가드가 조용히 꺼지는 경로 넷을 막는다` 가 main 에 병합돼 있어야 ③ 부터 시작할 수 있다. ③ 가 repo-privacy 파일을 옮기므로, PR #1 보다 먼저 병합하면 충돌한다.
 - 이 문서는 홈 경로를 글자 그대로 적지 않는다. 이 저장소의 가드와 `tests/invariants.sh` 가 추적 파일에 든 홈 경로를 막기 때문이다. 경로가 필요한 자리는 "홈 폴더 아래 `runner`" 처럼 풀어서 쓴다. 테스트는 지금처럼 경로를 실행할 때 조립한다.
 
 ## 1. 왜
@@ -37,14 +37,15 @@
 | 10 | privacy 나머지 | 셋 모두 넣는다. (a) 내용 검사는 추가된 줄만 하고(바이너리는 blob 전체), 내장 예외 넷을 두고, Windows 경로를 더한다. (b) `commit-msg` 훅으로 커밋 메시지도 검사한다. (c) `setup.sh` 가 훅이 아닌 파일에 실행 비트를 붙이지 않는다 |
 | 11 | 내장 홈 경로 예외 | 홈 폴더(`/home/`) 바로 아래가 정확히 `runner`, `node`, `vscode`, `linuxbrew` 인 경로만 예외다. macOS 의 공용 폴더(Users 아래 Shared)와 클라우드 기본 계정(`ubuntu`, `ec2-user`)은 계속 막는다. 예외 목록은 훅에 박힌 고정 목록이고 설정으로 늘릴 수 없다 |
 | 12 | 자체 CI | `pull_request` 와 main 푸시에서 `ubuntu-latest` 와 `macos-latest` 로 돌린다. 같은 브랜치에 새로 푸시하면 이전 실행을 취소하고, 권한은 `contents: read` 만 주며, 액션은 SHA 로 고정한다. 저장소가 공개로 바뀌어(2026-09-22) 표준 러너는 무료다 |
-| 13 | 호환성 | `breaking` 라벨을 만들어 ② 에 붙이고, 두 매니페스트를 0.2.0 으로 올린다. README 에 이전 판에서 옮겨 오는 방법을 적는다 |
-| 14 | PR 분할 | 기능별로 나눈다(4절, 11개). squash 병합이므로 PR 하나가 main 의 커밋 하나가 된다. 두 번째 인터뷰에서 확인 흐름과 변경 전달 방식이 새 요구로 들어와 처음 정한 10개에 ③ 하나를 더했다 |
+| 13 | 호환성 | `breaking` 라벨을 만들어 ③ 에 붙이고, 두 매니페스트를 0.2.0 으로 올린다. README 에 이전 판에서 옮겨 오는 방법을 적는다 |
+| 14 | PR 분할 | 기능별로 나눈다(4절, 12개). squash 병합이므로 PR 하나가 main 의 커밋 하나가 된다. 처음에는 10개였고, 두 번째 인터뷰에서 확인 흐름과 변경 전달(④)이, 세 번째 인터뷰에서 ADR 전환(②)이 더해졌다 |
 | 15 | 종단 검증 | 공개 임시 저장소 둘(처음 세팅하는 저장소, 활발한 저장소를 흉내 낸 저장소)과 이 저장소에서 한다(8절) |
-| 16 | 스펙 위치 | 이 파일을 ① 과 함께 커밋한다. 모두 끝나면 확정된 설계를 `docs/decisions.md` 로 옮기고, 이 파일에는 완료 표시만 남긴다 |
+| 16 | 스펙 위치와 수명 | 이 파일은 저장소 루트의 `SPEC.md` 이고 ① 과 함께 커밋한다. 파일 이름에 날짜를 넣지 않는다(날짜는 git 이력과 이 문서 첫 줄에 있다). 진행 중인 계획만 담는 임시 문서라서, 각 PR 이 자기가 실행한 결정을 ADR 로 옮기고(결정 21), 마지막 PR ⑫ 에서 2절의 결정이 모두 ADR 이나 코드·테스트로 옮겨졌는지 확인한 뒤 이 파일을 지운다 |
 | 17 | 확인 흐름 | 두 층으로 받는다. 먼저 실측 결과와 함께 목적마다 설명 카드를 보여 주고 적용할 목적을 고르게 한다. 그다음 고른 목적 안에서 부작용이 있는 단계마다 다시 확인받는다. 설명 카드는 처음 보는 사람도 이해할 수 있게 쓰되 실무적인 깊이를 갖춘다(3.2.2) |
 | 18 | 변경 전달 | 작업 트리에 추적 파일의 변경이 있으면 시작하지 않는다. 기본 브랜치의 최신 상태에서 `repo-setup/<YYYY-MM-DD>` 브랜치를 만들어 목적마다 커밋하고, PR 하나로 올린다. main 에는 직접 커밋하지 않는다. GitHub 설정은 확인을 받은 뒤 API 로 바꾸고, 룰셋은 세팅 PR 이 병합된 뒤에 건다(3.2.3) |
 | 19 | 필수 검사 선택 | 실제 실행에서 읽은 check 를 모두 보여 주고, 각각이 어느 워크플로의 것인지와 그 워크플로에 `paths`·`paths-ignore`·`branches` 필터나 job `if` 조건이 있는지를 표시한다. 필터나 조건이 있는 check 는 기본으로 빼 두고, 사람이 필수로 둘 것을 고른다. 걸기 전에 열린 PR 가운데 멈출 PR 과, PR 없이 main 에 들어온 최근 커밋을 보고한다 |
 | 20 | zizmor 기존 발견 | 처음 검사의 발견을 규칙별로 묶어 보여 주고, 에이전트가 고칠 것과 사람이 판단할 것으로 나눈다. 고칠 것은 고치고, 남길 것은 `zizmor.yml` 에 이유 주석과 함께 예외로 적는다. 로컬 검사가 0건이 된 뒤에만 차단하는 zizmor 워크플로를 놓는다. 기존 워크플로를 고치는 변경은 세팅 PR 안에서 별도 커밋으로 두고, 고친 파일과 줄 수를 보고한다 |
+| 21 | 설계 근거의 자리 | `docs/decisions.md` 를 결정 하나에 파일 하나인 ADR 로 나눈다(3.10). 실행 규칙(선택 조건, 순서)은 `SKILL.md` 한 곳에만 두고, ADR 에는 "왜"만 둔다. `docs/decisions.md` 는 ② 에서 지운다 |
 
 ## 3. 목표 구조와 인터페이스
 
@@ -56,8 +57,8 @@ plugin/skills/repo-setup/
   privacy/
     PROCEDURE.md
     templates/pre-commit      → 대상 .githooks/pre-commit
-    templates/commit-msg      → 대상 .githooks/commit-msg      (⑤)
-    templates/lib/guard.sh    → 대상 .githooks/lib/guard.sh    (⑤, 두 훅이 source)
+    templates/commit-msg      → 대상 .githooks/commit-msg      (⑥)
+    templates/lib/guard.sh    → 대상 .githooks/lib/guard.sh    (⑥, 두 훅이 source)
     templates/setup.sh        → 대상 저장소 루트 setup.sh
   license/
     PROCEDURE.md
@@ -167,20 +168,20 @@ main 보호 (룰셋)
 
 ### 3.3 privacy
 
-- **④ 추가된 줄만 검사**
+- **⑤ 추가된 줄만 검사**
   - 텍스트 파일은 `git diff --cached -U0 --no-color --no-ext-diff --no-textconv --no-renames` 가 내놓는 `+` 줄만 검사한다(`+++` 머리 줄은 뺀다).
   - `git diff --cached --numstat -z` 가 `-	-` 를 내는 바이너리는 지금처럼 blob 전체를 검사한다.
   - 파일 목록과 이름은 PR #1 처럼 `-z` 로 받고, 경로 검사(`.private/*`)는 그대로 둔다.
-- **④ 내장 패턴**
+- **⑤ 내장 패턴**
   - 지금의 두 패턴(`/Users/[A-Za-z]`, `/home/[A-Za-z]`)에 Windows 경로를 더한다. 드라이브 문자 뒤에 `\Users\` 가 오고 영문자가 이어지는 경로이며, 역슬래시가 하나인 경우와 이스케이프돼 둘인 경우를 모두 잡는다.
   - 예외는 결정 11의 넷이다. 경로 구성 요소 전체가 일치할 때만 예외로 본다. 예를 들어 홈 폴더 아래 `nodejs-user` 는 막는다.
   - 구현 방법은 정하지 않는다. 다만 한 줄에 예외 경로와 막을 경로가 함께 있으면 막아야 한다.
-- **⑤ commit-msg**
+- **⑥ commit-msg**
   - `.githooks/commit-msg "$1"` 은 메시지 파일에서 `#` 로 시작하는 줄을 빼고, pre-commit 과 같은 패턴(내장 패턴과 세 출처)으로 검사한다.
   - 패턴 적재와 검증 코드는 `.githooks/lib/guard.sh` 한 곳에 두고 두 훅이 `source` 한다.
   - 공존 한 줄: `"$(git rev-parse --show-toplevel)"/.githooks/commit-msg "$1" || exit 1`
   - `./setup.sh --verify` 는 임시 메시지 파일로 commit-msg 도 탐침한다. 두 훅이 모두 막아야 통과다.
-- **⑥ 실행 비트**: `setup.sh` 는 git 이 아는 훅 이름(`pre-commit`, `commit-msg` 등 githooks(5) 의 목록)에만 실행 비트를 채우고 그것만 센다. `team-patterns` 와 `lib/` 는 건드리지 않는다.
+- **⑦ 실행 비트**: `setup.sh` 는 git 이 아는 훅 이름(`pre-commit`, `commit-msg` 등 githooks(5) 의 목록)에만 실행 비트를 채우고 그것만 센다. `team-patterns` 와 `lib/` 는 건드리지 않는다.
 - privacy 카드의 「켠 뒤 겪는 일」에는 다음을 적는다. 동료도 클론마다 `./setup.sh` 를 한 번 돌려야 하고, 돌리지 않은 기계에서는 가드가 꺼져 있다. 이미 커밋된 이력은 검사하지 않는다. commitlint 처럼 commit-msg 를 쓰는 도구가 있으면 공존 한 줄이 필요하다.
 
 ### 3.4 license
@@ -296,41 +297,81 @@ main 보호 (룰셋)
   - 트리거는 `pull_request` 와 main 푸시이고, matrix 는 `ubuntu-latest` 와 `macos-latest` 다.
   - `concurrency` 는 `cancel-in-progress: true` 이고, `permissions` 는 `contents: read` 이며, 액션은 SHA 로 고정한다.
   - 단계는 checkout, shellcheck 준비(러너별 설치 방법은 7절에서 확인), `.check.toml` 의 `test_command`, CLAUDE.md 의 shellcheck 명령 순서다.
-- ⑦ 뒤: 자체 CI 에 zizmor job 을 더한다. 대상은 이 저장소의 `.github/workflows/` 다.
-- ②: `tests/invariants.sh` 를 새 구조에 맞춘다.
+- ⑧ 뒤: 자체 CI 에 zizmor job 을 더한다. 대상은 이 저장소의 `.github/workflows/` 다.
+- ③: `tests/invariants.sh` 를 새 구조에 맞춘다.
   - 스킬 수는 1이다.
   - 진입점 표의 목적 이름 집합이 목적 폴더 집합과 같아야 한다.
-  - 목적 폴더마다 `PROCEDURE.md` 가 있어야 한다. ③ 부터는 `PROCEDURE.md` 에 「카드」 절이 있고 일곱 칸 제목이 모두 있어야 한다.
+  - 목적 폴더마다 `PROCEDURE.md` 가 있어야 한다. ④ 부터는 `PROCEDURE.md` 에 「카드」 절이 있고 일곱 칸 제목이 모두 있어야 한다.
   - SKILL.md 와 PROCEDURE.md 가 가리키는 `<목적>/(scripts|templates)/…` 경로가 실제로 있어야 한다.
   - `scripts/*.sh` 와 훅 템플릿에 실행 비트가 있어야 한다.
   - 루트 사본이 새 경로의 템플릿과 같아야 한다.
   - 본문이 `../` 나 저장소 루트의 `docs/` 를 가리키면 안 된다. 지금 검사는 `../` 만 보아서 `docs/decisions.md` 참조를 놓친다.
   - 매니페스트 description 대조는 유지한다.
-- ②: CLAUDE.md 의 구조 절과 shellcheck 글롭, README, `docs/decisions.md` 를 새 구조로 고친다. 각 목적의 세부 문서는 그 목적의 PR 에서 고친다.
+- ③: CLAUDE.md 의 구조 절과 shellcheck 글롭, README 를 새 구조로 고친다. ADR 0006 을 더하고 0002 를 superseded 로 표시한다(3.10). 각 목적의 세부 문서는 그 목적의 PR 에서 고친다.
+
+### 3.10 ADR (결정 21)
+
+- **자리와 이름.** `docs/adr/NNNN-<영어-kebab-slug>.md`. 번호는 네 자리로 차례대로 매기고 다시 쓰지 않는다. 파일 이름에 날짜를 넣지 않는다. 목록은 `docs/adr/README.md` 에 번호, 제목, 상태를 한 줄씩 둔다.
+- **형식.** Nygard 형식을 따르고 본문은 한국어로 쓴다(6절의 출처 11). 절은 다섯이다.
+  - 제목: 결정을 짧은 명사구로 쓴다.
+  - 상태: `제안`, `승인`, `폐기`, `대체됨(→ NNNN)` 중 하나와 날짜.
+  - 맥락: 결정을 부른 힘을 중립적으로 적는다.
+  - 결정: "~한다"로 끝나는 완결된 문장으로 적는다.
+  - 결과: 좋은 것, 나쁜 것, 중립인 것을 모두 적는다. 버린 대안과 그 이유도 여기에 둔다.
+- **뒤집힌 결정.** 지우지 않는다. 상태를 `대체됨(→ NNNN)` 으로 바꾸고, 새 ADR 의 맥락에서 옛 ADR 을 가리킨다.
+- **규칙은 두지 않는다.** 선택 조건이나 순서 같은 실행 규칙은 `SKILL.md` 에만 두고, ADR 에는 그 규칙을 **왜** 그렇게 정했는지만 적는다. 같은 규칙을 두 곳에 두면 한쪽만 고쳐져 어긋난다.
+- **② 에서 옮길 것** (`docs/decisions.md` 에서):
+
+| 번호 | 제목 | 옮겨 올 곳 |
+|---|---|---|
+| 0001 | 저장소 층만 다룬다 | 1절과 7절(언어별 도구 체인, `.gitignore` 전체를 다루지 않는 이유) |
+| 0002 | 목적별로 좁은 스킬 다섯을 둔다 | 2절(항목별 아홉 개와 층별 세 개를 버린 이유) |
+| 0003 | 겹치는 파일과 설정의 소유를 정한다 | 3절(워크플로 파일, 브랜치 보호, `.gitignore` 의 `.private/` 한 줄) |
+| 0004 | 테스트 없는 저장소에 CI 를 만들지 않는다 | 4절의 해당 문단(빈 CI 가 보호를 껍데기로 만드는 이유) |
+| 0005 | 팀 저장소의 공유 자산은 제안만 한다 | 5절 첫 규칙 |
+
+  - 4절의 선택 표와 호출 순서는 `SKILL.md` 에 이미 있으므로 옮기지 않는다. 순서의 **이유** 문장은 0003 에 둔다.
+  - 5절의 "스킬 본문은 자기 폴더만으로 완결된다"는 CLAUDE.md 의 규칙으로 이미 있으므로 옮기지 않는다.
+  - 6절(끝난 할 일 목록)은 옮기지 않는다.
+  - 출처 절은 해당 ADR 의 맥락으로 옮긴다.
+- **새 결정을 옮길 PR**
+
+| 번호 | 제목 | 더하는 PR | 이 스펙의 결정 |
+|---|---|---|---|
+| 0006 | 스킬 하나에 목적별 폴더를 둔다(0002 를 대체) | ③ | 1 |
+| 0007 | 설명 카드로 두 번 확인받고 변경은 브랜치와 PR 로 올린다 | ④ | 17, 18 |
+| 0008 | 판정은 검증된 도구와 GitHub API 에 맡기고 가드만 bash 와 git 으로 둔다 | ⑧·⑨·⑩ 중 먼저 병합되는 것 | 2, 3, 6, 7, 8, 20 |
+| 0009 | GitHub 설정은 계획을 먼저 보이고 --apply 로만 바꾼다 | ⑧ | 9 |
+| 0010 | main 보호는 룰셋으로 하고 필수 검사는 사람이 고른다 | ⑪ | 4, 5, 19 |
+| 0011 | 팀 저장소에도 파일 변경은 PR 로 올린다(0005 를 일부 고침) | ④ | 18(3.2.3 의 6) |
+
+  - 0011 이 0005 를 고치는 방식: 0005 의 상태는 `승인` 으로 두고, 0011 의 맥락에서 0005 를 가리키며 "파일 변경은 PR 로 올려도 되고, GitHub 설정은 여전히 제안만 한다"고 좁힌다.
+  - 나머지 결정(10~16)은 코드와 테스트, CLAUDE.md, 매니페스트에 이미 드러나므로 ADR 로 옮기지 않는다. ⑫ 에서 이 판정을 다시 확인한다.
 
 ## 4. PR 순서
 
 | # | 제목 | 라벨 | 선행 | 완료 조건 |
 |---|---|---|---|---|
 | ① | `ci: 테스트와 shellcheck 를 ubuntu 와 macOS 에서 돌린다` | 없음(`ci` 에 맞는 라벨이 없다. PR 본문에 적는다) | 없음 | 두 러너에서 초록. 이 스펙 문서 포함 |
-| ② | `refactor(skill)!: 좁은 스킬 다섯을 repo-setup 의 목적별 폴더로 합친다` | `breaking`(새로 만든다) | PR #1, ① | 동작 변화 없이 파일 이동, frontmatter, 진입점, invariants, 문서, 0.2.0. 기계적 이동과 내용 변경을 섞지 않는다 |
-| ③ | `feat(setup): 목적마다 설명 카드로 확인받고 변경을 브랜치와 PR 로 올린다` | `enhancement` | ② | 3.2 의 공통 실측 추가, 3.2.1~3.2.3. 다섯 PROCEDURE.md 에 「카드」 절(각 목적 PR 에서 내용을 다듬는다) |
-| ④ | `fix(privacy): 추가된 줄만 검사하고 공용 계정 경로를 막지 않는다` | `bug` | ② | 3.3 의 ④ |
-| ⑤ | `feat(privacy): 커밋 메시지도 가드가 검사한다` | `enhancement` | ② | 3.3 의 ⑤ |
-| ⑥ | `fix(privacy): 훅이 아닌 파일에 실행 비트를 붙이지 않는다` | `bug` | ② | 3.3 의 ⑥ |
-| ⑦ | `feat(secure)!: 워크플로 검사를 zizmor 로, CodeQL 을 default setup 으로 바꾼다` | `enhancement`, `breaking` | ③ | 3.6, 3.7 |
-| ⑧ | `fix(license): 알아보지 못한 본문에 이름을 붙이지 않는다` | `bug` | ② | 3.4 |
-| ⑨ | `fix(ci): 테스트가 실제로 돈 것을 보고 워크플로를 놓는다` | `bug` | ③ | 3.5 |
-| ⑩ | `feat(contrib)!: 브랜치 보호를 룰셋으로 옮기고 골격 셋을 뺀다` | `enhancement`, `breaking` | ⑨ | 3.7, 3.8 |
-| ⑪ | `docs: CLAUDE.md 에서 테스트 건수와 낡은 문장을 뺀다` | `documentation` | ② | 건수 제거. "repo-privacy 가 템플릿 둘을 본문에 품는다" 같은 낡은 문장 정리 |
+| ② | `docs(adr): decisions.md 를 결정별 ADR 로 나눈다` | `documentation` | 없음 | 3.10 의 0001~0005 와 `docs/adr/README.md`. `docs/decisions.md` 삭제. `CLAUDE.md:6` 이 `docs/adr/` 를 가리키게 고침. `repo-setup/SKILL.md:92` 의 `docs/decisions.md` 참조 삭제. 내용을 새로 쓰지 않고 옮기기만 한다 |
+| ③ | `refactor(skill)!: 좁은 스킬 다섯을 repo-setup 의 목적별 폴더로 합친다` | `breaking`(새로 만든다) | PR #1, ①, ② | 동작 변화 없이 파일 이동, frontmatter, 진입점, invariants, 문서, 0.2.0. ADR 0006. 기계적 이동과 내용 변경을 섞지 않는다 |
+| ④ | `feat(setup): 목적마다 설명 카드로 확인받고 변경을 브랜치와 PR 로 올린다` | `enhancement` | ③ | 3.2 의 공통 실측 추가, 3.2.1~3.2.3. 다섯 PROCEDURE.md 에 「카드」 절(각 목적 PR 에서 내용을 다듬는다). ADR 0007, 0011 |
+| ⑤ | `fix(privacy): 추가된 줄만 검사하고 공용 계정 경로를 막지 않는다` | `bug` | ③ | 3.3 의 ⑤ |
+| ⑥ | `feat(privacy): 커밋 메시지도 가드가 검사한다` | `enhancement` | ③ | 3.3 의 ⑥ |
+| ⑦ | `fix(privacy): 훅이 아닌 파일에 실행 비트를 붙이지 않는다` | `bug` | ③ | 3.3 의 ⑦ |
+| ⑧ | `feat(secure)!: 워크플로 검사를 zizmor 로, CodeQL 을 default setup 으로 바꾼다` | `enhancement`, `breaking` | ④ | 3.6, 3.7. ADR 0009, 그리고 ⑧·⑨·⑩ 중 먼저 병합되면 0008 |
+| ⑨ | `fix(license): 알아보지 못한 본문에 이름을 붙이지 않는다` | `bug` | ③ | 3.4 |
+| ⑩ | `fix(ci): 테스트가 실제로 돈 것을 보고 워크플로를 놓는다` | `bug` | ④ | 3.5 |
+| ⑪ | `feat(contrib)!: 브랜치 보호를 룰셋으로 옮기고 골격 셋을 뺀다` | `enhancement`, `breaking` | ⑩ | 3.7, 3.8. ADR 0010 |
+| ⑫ | `docs: 구조 변경을 마무리하며 낡은 문서를 정리한다` | `documentation` | ①~⑪ 모두 | CLAUDE.md 의 테스트 건수와 낡은 문장(예: "repo-privacy 가 템플릿 둘을 본문에 품는다") 제거. 2절의 결정이 모두 ADR 이나 코드·테스트로 옮겨졌는지 표로 확인한 뒤 SPEC.md 삭제 |
 
 - 모든 PR 은 저장소 규칙대로 **테스트를 먼저 쓰고 RED 를 확인한 뒤** 구현한다.
 - PR 본문은 main 에 그대로 남을 글로 쓴다. 제목은 `type(scope): 요약` 이다.
-- ⑦·⑨ 는 ③ 뒤에 온다. 카드와 확인 흐름, 세팅 PR 에서 CI 를 돌리는 방식이 ③ 에서 정해지기 때문이다. ④·⑤·⑥·⑧·⑪ 은 ② 뒤라면 서로 순서가 없다.
+- ② 는 ③ 보다 먼저 병합한다. ③ 이 0002 를 대체하는 ADR 을 더하기 때문이다. ⑧·⑩ 은 ④ 뒤에 온다. 카드와 확인 흐름, 세팅 PR 에서 CI 를 돌리는 방식이 ④ 에서 정해지기 때문이다. ⑤·⑥·⑦·⑨ 는 ③ 뒤라면 서로 순서가 없다. ⑫ 는 맨 마지막이다.
 
 ## 5. 범위 밖
 
-- 언어별 도구 체인과 `.gitignore` 전체. `docs/decisions.md` 1절과 3절을 유지한다.
+- 언어별 도구 체인과 `.gitignore` 전체. ADR 0001 과 0003 을 유지한다.
 - Codex, Antigravity 에서의 실제 실행 검증. `npx skills` 탐색 경로 불변식만 유지한다.
 - 조직 수준 룰셋, GHAS 와 Code Security 구매·설정.
 - zizmor 말고 다른 워크플로 린터(actionlint 등)와 자동 고정 도구(pinact 등).
@@ -357,6 +398,8 @@ main 보호 (룰셋)
     - `gh api repos/IsthisLee/repo-setup/rulesets` → HTTP 200, 0개. 만들 수 있다는 증거는 아니다.
     - `gh api repos/IsthisLee/repo-setup/community/profile` → 응답은 왔지만 `files` 에 `security` 키가 없다.
     - 그 뒤 `gh repo edit --visibility public` 으로 공개로 바꿨다. 공개하기 전에 전체 이력(커밋 17개)에서 홈 경로, 흔한 비밀 형식, `.private/`, 개인 패턴이 추가된 줄이 모두 0건임을 확인했다.
+11. **공식 문서가 아닌 원전**, Michael Nygard, [Documenting Architecture Decisions](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions)(2011): 절은 Title, Context, Decision, Status, Consequences 다섯이다. "ADRs will be numbered sequentially and monotonically. Numbers will not be reused."(번역: ADR 은 차례대로, 줄어들지 않게 번호를 매긴다. 번호는 다시 쓰지 않는다.) "If a decision is reversed, we will keep the old one around, but mark it as superseded."(번역: 결정이 뒤집히면 옛것을 지우지 않고 대체됐다고 표시한다.) 상태는 proposed, accepted, deprecated, superseded 넷이다.
+12. **공식 문서**, Claude Code [Best practices](https://code.claude.com/docs/en/best-practices): 인터뷰 프롬프트 예시가 "write a complete spec to SPEC.md"(번역: 완전한 스펙을 SPEC.md 에 써라)로 끝나고, "Once the spec is complete, start a fresh session to execute it."(번역: 스펙이 완성되면 그것을 실행할 새 세션을 시작하라.)라고 적혀 있다. 스펙 파일을 끝난 뒤 어떻게 할지는 다루지 않는다. 그래서 결정 16 의 "끝나면 지운다"는 이 저장소가 정한 규칙이다.
 
 ## 7. 구현 전에 확인할 것 (아직 확인하지 않음)
 
@@ -387,7 +430,7 @@ gh pr checks <PR 번호>
 - `gh pr checks` 에서 ubuntu 와 macOS 두 job 이 모두 `pass` 여야 한다.
 - 테스트 이름과 개수는 바뀔 수 있다. 판정은 종료 코드로 한다.
 
-### 8.2 가드 (④⑤⑥ 뒤, 로컬 임시 저장소)
+### 8.2 가드 (⑤⑥⑦ 뒤, 로컬 임시 저장소)
 
 `privacy/templates/` 의 파일을 새 임시 저장소에 복사하고 `./setup.sh` 를 돌린 뒤, 실제 `git commit` 으로 확인한다.
 
@@ -406,7 +449,7 @@ gh pr checks <PR 번호>
 - `./setup.sh --verify` 는 `검증 통과` 와 exit 0 을 내야 하고, pre-commit 과 commit-msg 를 모두 탐침해야 한다.
 - `.githooks/team-patterns` 가 있는 저장소에서 `./setup.sh` 를 돌린 뒤 `git status --porcelain` 에 모드 변경이 없어야 한다.
 
-### 8.3 처음 세팅하는 경로 (⑩ 뒤, 공개 임시 저장소)
+### 8.3 처음 세팅하는 경로 (⑪ 뒤, 공개 임시 저장소)
 
 1. 사용자에게 확인받은 뒤 `gh repo create IsthisLee/repo-setup-e2e --public --clone` 을 실행한다. 저장소에는 pytest 테스트 하나를 가진 작은 파이썬 프로젝트만 두고, LICENSE 와 워크플로는 두지 않는다.
 2. 그 저장소에서 `/repo-setup` 을 인자 없이 돌린다.
@@ -436,7 +479,7 @@ gh pr checks <PR 번호>
 | 빈 커밋을 main 으로 직접 `git push` | 거절. 거절 메시지를 기록해 3.2.2 예시 카드의 문구를 바꾼다 |
 | 같은 커밋을 PR 로 올림 | 필수 검사가 이름대로 나타나고, 통과한 뒤 병합 가능 |
 
-### 8.4 활발한 저장소를 흉내 낸 경로 (⑩ 뒤, 공개 임시 저장소)
+### 8.4 활발한 저장소를 흉내 낸 경로 (⑪ 뒤, 공개 임시 저장소)
 
 1. 사용자에게 확인받은 뒤 `gh repo create IsthisLee/repo-setup-e2e-active --public --clone` 을 실행하고 다음을 미리 만든다.
    - 테스트가 있는 프로젝트, MIT LICENSE
@@ -456,7 +499,7 @@ gh pr checks <PR 번호>
 
 3. 두 임시 저장소는 사람이 `gh auth refresh -s delete_repo` 를 직접 실행한 뒤, 삭제 직전에 다시 확인받고 `gh repo delete <저장소> --yes` 로 지운다.
 
-### 8.5 이미 도구가 있는 실제 저장소 (⑩ 뒤, 이 저장소)
+### 8.5 이미 도구가 있는 실제 저장소 (⑪ 뒤, 이 저장소)
 
 이 저장소에서 `/repo-setup` 을 돌린다. 확인 흐름은 8.3 과 같다.
 
@@ -476,4 +519,4 @@ gh pr checks <PR 번호>
 |---|---|---|
 | PR #1 | 열림, 병합 대기 | https://github.com/IsthisLee/repo-setup/pull/1 |
 | ① | 대기 | |
-| ② ~ ⑪ | 대기 | |
+| ② ~ ⑫ | 대기 | |
