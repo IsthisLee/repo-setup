@@ -20,6 +20,9 @@
   템플릿 인용 대조, `npx skills` 탐색 경로, `description` 병기, 자리표시자 폴백, 부모 경로 참조,
   매니페스트 description 대조, 실행 비트, 홈 경로 15건.  **합계 41건.**
 - `shellcheck -x -s bash plugin/skills/*/templates/*.sh setup.sh .githooks/* tests/*.sh tests/*/*.sh`
+- `.github/workflows/test.yml` 이 PR 과 main 푸시마다 위 테스트와 shellcheck 를 ubuntu 와 macOS 에서
+  돌린다. 테스트 목록은 `.check.toml` 의 `test_command` 를 읽으므로 따로 고치지 않는다.
+  **shellcheck 줄을 고치면 워크플로의 같은 줄도 고친다.**
 
 ## 규칙
 
