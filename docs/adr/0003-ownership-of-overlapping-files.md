@@ -4,7 +4,7 @@
 
 ## 맥락
 
-목적 다섯은 서로 다른 것을 세팅하지만, 경계에서 같은 파일이나 설정을 건드리는 곳이 셋 있다.
+목적 다섯 개는 서로 다른 것을 세팅하지만, 경계에서 같은 파일이나 설정을 건드리는 곳이 세 군데 있다.
 
 - `.github/workflows/*.yml` 은 테스트 워크플로와 호스트 보안 층이 함께 건드린다.
 - 브랜치 보호는 검증 방법이 호스트 보안 층과 같은 API 호출이지만, 혼자 쓰는 저장소에는 의미가 없는
@@ -18,7 +18,7 @@
 
 | 스킬 | 소유하는 것 | 성공 판정 | 순서 |
 |---|---|---|---|
-| `repo-privacy` | 커밋 훅, 패턴 출처 셋, `core.hooksPath`, `.gitignore` 의 `.private/` 한 줄 | 홈 경로가 든 커밋이 실제로 막힌다 | 1 |
+| `repo-privacy` | 커밋 훅, 패턴 출처 세 곳, `core.hooksPath`, `.gitignore` 의 `.private/` 한 줄 | 홈 경로가 든 커밋이 실제로 막힌다 | 1 |
 | `repo-license` | `LICENSE`, 매니페스트의 `license` 필드, SPDX 헤더 | 파일과 매니페스트가 같은 라이선스를 말한다 | 2 |
 | `repo-ci` | 테스트 워크플로 파일, 매트릭스 | 워크플로가 실제로 한 번 돌아 통과한다 | 3 |
 | `repo-secure` | secret scanning, push protection, 코드 스캐닝, `dependabot.yml`, 액션 SHA 고정, 토큰 권한 | GitHub API 가 `enabled` 를 돌려준다. 워크플로에 태그 참조가 없다 | 4 |

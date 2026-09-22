@@ -56,8 +56,8 @@ npx skills@latest add IsthisLee/repo-setup -a codex -a cursor   # 특정 에이�
 | 설치 형태 | 실물이 놓이는 곳 | 에이전트 폴더 |
 |---|---|---|
 | 프로젝트 범위, 에이전트 미지정 | `./.agents/skills/<이름>/` | `.claude/skills/<이름>` 심링크 |
-| 전역 `-g`, 에이전트 둘 지정 | `~/.agents/skills/<이름>/` | `~/.claude/skills/<이름>` 심링크 |
-| 전역 `-g -a claude-code` 하나만 | `~/.claude/skills/<이름>/` 에 실물 복사 | 심링크를 만들지 않습니다 |
+| 전역 `-g`, 에이전트 두 개 지정 | `~/.agents/skills/<이름>/` | `~/.claude/skills/<이름>` 심링크 |
+| 전역 `-g -a claude-code` 한 개만 | `~/.claude/skills/<이름>/` 에 실물 복사 | 심링크를 만들지 않습니다 |
 | 전역 `-g -a codex` | `~/.agents/skills/<이름>/` 에 실물 복사 | `~/.codex/skills/` 는 만들어지지 않습니다 |
 
 설치한 자리에 `skills-lock.json` 이 함께 생깁니다.
@@ -65,7 +65,7 @@ npx skills@latest add IsthisLee/repo-setup -a codex -a cursor   # 특정 에이�
 **비공개 저장소를 받을 때는 받는 쪽에 접근 권한이 있는 git 인증이 있어야 합니다.** CLI 는 그 저장소
 URL 에 이미 설정된 인증(git credential helper, GitHub CLI, SSH 순)을 씁니다. 이 저장소가 비공개였을 때
 인증이 없는 홈에서 돌리면 `Failed to clone ... fatal: unable to get password from user` 를 내고
-`Installation failed` 로 멈췄습니다. 조용히 빈 상태로 끝나지 않았고, `credential.helper` 하나만 있어도
+`Installation failed` 로 멈췄습니다. 조용히 빈 상태로 끝나지 않았고, `credential.helper` 만 있어도
 받아졌습니다. 이 저장소는 2026-09-22 에 공개로 바뀌었습니다.
 
 **`-y` 를 주면 감지 여부와 무관하게 아주 많은 에이전트에 설치합니다.** 격리 환경에서 재 보니 57개였고,
@@ -104,7 +104,7 @@ npx skills@latest remove repo-privacy repo-license repo-ci repo-secure repo-cont
 놓습니다. 옮기려면 `mkdir -p script && git mv setup.sh script/setup` 을 돌리고, 그 저장소 문서의
 `./setup.sh` 를 `script/setup` 으로 고칩니다.
 
-## 목적 다섯
+## 목적 다섯 개
 
 | 목적 | 인자 | 하는 일 |
 |---|---|---|

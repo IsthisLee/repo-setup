@@ -38,7 +38,7 @@ tests/guard/unit.sh && tests/setup/unit.sh && tests/license/unit.sh && tests/ci/
 ### 기여
 
 커밋 가드를 켜려면 클론한 뒤 `script/setup` 을 한 번 돌린다. 이 저장소의 가드는 스킬 템플릿의 사본이고,
-`tests/invariants.sh` 가 둘이 같은지 본다. 규칙과 커밋 메시지 형식은 `CLAUDE.md` 의 「규칙」 절에 있다.
+`tests/invariants.sh` 가 두 파일이 같은지 본다. 규칙과 커밋 메시지 형식은 `CLAUDE.md` 의 「규칙」 절에 있다.
 
 ## 바꾸는 것
 
@@ -48,7 +48,7 @@ tests/guard/unit.sh && tests/setup/unit.sh && tests/license/unit.sh && tests/ci/
 
 - Codex, Antigravity 같은 다른 에이전트에서 실제로 실행해 보지 않았다. `npx skills` 가 스킬을 찾는
   경로만 `tests/invariants.sh` 가 검사한다.
-- shellcheck 를 올릴 때는 워크플로의 판 하나와 sha256 둘을 손으로 바꿔야 한다.
+- shellcheck 를 올릴 때는 워크플로의 판 번호 한 개와 sha256 두 개를 손으로 바꿔야 한다.
 - shellcheck 명령은 `CLAUDE.md` 와 워크플로 두 곳에 있고, 둘이 같은지 검사하는 테스트는 없다.
 
 ## 관련 파일

@@ -1,6 +1,6 @@
 ---
 name: repo-setup
-description: Set up a git repository for its intended purpose. Measures visibility, ownership (personal or team), host, and existing tooling before acting, then applies only the purposes that actually fit, in order - a pre-commit guard against personal information (privacy), a consistent license (license), a test workflow proven by a real run (ci), the host security layer and pinned actions (secure), and collaboration files with branch protection (contrib) - reporting what was done and what was skipped with reasons. Pass one purpose name to run only that purpose. Use it for requests like "set up this repo", "prepare a public repository", "add a license", or "new repo setup". git 저장소를 용도에 맞게 세팅한다. 공개 여부, 소유(개인/팀), 호스트, 이미 깔린 도구를 먼저 실측하고, 개인 정보 커밋 가드(privacy), 라이선스(license), 실제로 돌려 확인하는 테스트 워크플로(ci), 호스트 보안 층과 액션 고정(secure), 협업 파일과 브랜치 보호(contrib) 가운데 그 저장소에 해당하는 목적만 골라 순서대로 적용한다. 목적 이름 하나를 인자로 주면 그 목적만 돈다. 무엇을 했고 무엇을 왜 건너뛰었는지 함께 보고한다. "저장소 세팅해줘", "공개 저장소 준비", "라이선스 넣어줘", "새 저장소 세팅" 같은 요청에 쓴다.
+description: Set up a git repository for its intended purpose. Measures visibility, ownership (personal or team), host, and existing tooling before acting, then applies only the purposes that actually fit, in order - a pre-commit guard against personal information (privacy), a consistent license (license), a test workflow proven by a real run (ci), the host security layer and pinned actions (secure), and collaboration files with branch protection (contrib) - reporting what was done and what was skipped with reasons. Pass one purpose name to run only that purpose. Use it for requests like "set up this repo", "prepare a public repository", "add a license", or "new repo setup". git 저장소를 용도에 맞게 세팅한다. 공개 여부, 소유(개인/팀), 호스트, 이미 깔린 도구를 먼저 실측하고, 개인 정보 커밋 가드(privacy), 라이선스(license), 실제로 돌려 확인하는 테스트 워크플로(ci), 호스트 보안 층과 액션 고정(secure), 협업 파일과 브랜치 보호(contrib) 가운데 그 저장소에 해당하는 목적만 골라 순서대로 적용한다. 목적 이름 한 개를 인자로 주면 그 목적만 돈다. 무엇을 했고 무엇을 왜 건너뛰었는지 함께 보고한다. "저장소 세팅해줘", "공개 저장소 준비", "라이선스 넣어줘", "새 저장소 세팅" 같은 요청에 쓴다.
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion
 ---
@@ -70,7 +70,7 @@ git rev-list --count --since="30 days ago" "origin/<기본 브랜치>"          
 find .github/workflows -maxdepth 1 -type f \( -name '*.yml' -o -name '*.yaml' \) 2>/dev/null | wc -l   # 기존 워크플로 수
 ```
 
-셸 글롭(`ls .github/workflows/*.yml`)으로 세지 않는다. zsh 는 맞는 파일이 없는 글롭 하나 때문에 명령 전체를
+셸 글롭(`ls .github/workflows/*.yml`)으로 세지 않는다. zsh 는 맞는 파일이 없는 글롭 한 개 때문에 명령 전체를
 실패시켜 0 을 낸다.
 
 여기서 정해지는 축이 넷이다.
