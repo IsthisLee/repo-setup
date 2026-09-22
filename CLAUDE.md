@@ -1,9 +1,9 @@
 # repo-setup
 
-용도에 맞게 git 저장소를 세팅하는 커맨드 모음이다. 진입점 `repo-setup` 하나가 실측해 해당하는 것만 고르고 좁은 스킬을 부른다.
-좁은 스킬은 `repo-privacy`(개인 정보 가드), `repo-license`(라이선스), `repo-ci`(테스트 워크플로),
-`repo-secure`(호스트 보안 층), `repo-contrib`(협업 준비) 다섯이다.
-구현된 기능의 설명은 `docs/wiki/` 에, 각 스킬의 경계와 설계 결정의 이유는 `docs/adr/` 에 있다.
+용도에 맞게 git 저장소를 세팅하는 커맨드다. 스킬은 `repo-setup` 하나이고, 실측해 해당하는 목적만 골라 그 목적의
+절차 문서를 따른다. 목적은 `privacy`(개인 정보 가드), `license`(라이선스), `ci`(테스트 워크플로),
+`secure`(호스트 보안 층), `contrib`(협업 준비) 다섯이고, 각각 `plugin/skills/repo-setup/<목적>/` 폴더다.
+구현된 기능의 설명은 `docs/wiki/` 에, 각 목적의 경계와 설계 결정의 이유는 `docs/adr/` 에 있다.
 
 ## 검사 명령
 
@@ -18,33 +18,39 @@
   않는지, 스스로 놓는 골격이 태그를 쓰지 않는지 본다.
 - `tests/ci/unit.sh` — 테스트 명령 실측기와 워크플로 골격 21건. `npm` 의 기본 자리표시자를
   테스트로 보지 않는지, 골격이 쓰기 권한을 주지 않는지 본다.
-- `tests/invariants.sh` — 매니페스트, 폴더명과 `name` 일치, 스킬 수, `repo-setup` 의 스킬 표 대조,
-  템플릿 인용 대조, `npx skills` 탐색 경로, `description` 병기, 자리표시자 폴백, 부모 경로 참조,
-  매니페스트 description 대조, 실행 비트, 사본 일치, wiki 페이지와 목차, wiki 의 경로와 ADR 링크,
-  ADR 목록, 홈 경로 22건.  **합계 181건.**
-- `shellcheck -x -s bash plugin/skills/*/templates/*.sh setup.sh .githooks/* tests/*.sh tests/*/*.sh`
+- `tests/invariants.sh` — 매니페스트, 폴더명과 `name` 일치, 스킬 수 1, 진입점의 목적 표와 목적 폴더·
+  `PROCEDURE.md` 대조, `npx skills` 탐색 경로, `description` 병기, 자리표시자, 스킬 폴더 밖 참조,
+  절차 문서가 가리키는 파일, 매니페스트 description 대조, 실행 비트, 사본 일치, 템플릿 인용 대조,
+  wiki 페이지와 목차, wiki 의 경로와 ADR 링크, ADR 목록, 홈 경로 22건.  **합계 181건.**
+- `shellcheck -x -s bash plugin/skills/repo-setup/*/scripts/*.sh plugin/skills/repo-setup/privacy/templates/setup script/setup .githooks/* tests/*.sh tests/*/*.sh`
 - `.github/workflows/test.yml` 이 PR 과 main 푸시마다 위 테스트와 shellcheck 를 ubuntu 와 macOS 에서
   돌린다. 테스트 목록은 `.check.toml` 의 `test_command` 를 읽으므로 따로 고치지 않는다.
   **shellcheck 줄을 고치면 워크플로의 같은 줄도 고친다.**
 
 ## 규칙
 
-- **훅이나 `setup.sh` 를 고치면 테스트를 먼저 쓴다.** RED 를 보고 나서 구현한다.
-- **정본은 스킬 폴더의 `templates/` 다.** `npx skills` 가 스킬 폴더를 통째로 가져가므로 그 안에 두면
-  깐 쪽까지 따라간다. **본문에 옮겨 적지 않는다.** 정본이 둘이 되면 한쪽이 낡고,
+- **훅이나 `script/setup` 을 고치면 테스트를 먼저 쓴다.** RED 를 보고 나서 구현한다.
+- **정본은 목적 폴더의 `templates/` 와 `scripts/` 다.** `templates/` 는 대상 저장소로 복사하는 파일이고
+  `scripts/` 는 스킬 폴더에서 그대로 실행하는 파일이다. `npx skills` 가 스킬 폴더를 통째로 가져가므로 그
+  안에 두면 깐 쪽까지 따라간다. **`SKILL.md` 나 `PROCEDURE.md` 에 옮겨 적지 않는다.** 정본이 둘이 되면 한쪽이 낡고,
   `tests/invariants.sh` 가 그 인용을 잡는다.
-- 저장소 루트의 `.githooks/pre-commit` 과 `setup.sh` 는 **이 저장소 자신에게 건 가드**다.
-  스킬의 `templates/` 에서 복사한 사본이라 내용이 같고, `tests/invariants.sh` 가 어긋남을 잡는다. `git config core.hooksPath .githooks` 로 켠다.
+- 저장소 루트의 `.githooks/pre-commit` 과 `script/setup` 은 **이 저장소 자신에게 건 가드**다.
+  `privacy/templates/` 에서 복사한 사본이라 내용이 같고, `tests/invariants.sh` 가 어긋남을 잡는다. `git config core.hooksPath .githooks` 로 켠다.
 - **커밋에 개인 정보를 넣지 않는다.** 이 저장소가 다루는 주제가 그것이다.
-- **좁은 스킬을 더하거나 빼면 `repo-setup` 의 표와 `tests/invariants.sh` 의 스킬 수를 함께 고친다.**
-  표와 실제가 어긋나면 없는 것을 부르거나 있는 것을 모르게 되고, 둘 다 조용히 일어난다.
+- **목적을 더하거나 빼면 진입점 `SKILL.md` 의 목적 표, 목적 폴더와 그 `PROCEDURE.md`, `docs/wiki/<목적>.md`
+  를 함께 고친다.** 표와 실제가 어긋나면 없는 것을 읽으려 하거나 있는 것을 모르게 되고, 둘 다 조용히
+  일어난다. `tests/invariants.sh` 가 셋의 일치를 본다.
+- **스킬을 다시 나누지 않는다.** 스킬은 `repo-setup` 하나다. 목적을 스킬로 나누면 `disable-model-invocation`
+  이 진입점의 호출을 막는다(`docs/adr/0006-single-skill-with-purpose-folders.md`).
 - **스킬은 `plugin/skills/` 에 둔다.** `npx skills` 는 `.claude-plugin/marketplace.json` 의
   `plugins[].source` 를 풀어 그 아래 `skills/` 를 탐색 경로에 더한다(CLI 1.7.0 의
-  `getPluginSkillPaths`, 확인일 2026-09-18). 스킬을 그 밖으로 옮기면 Claude Code 에서는 계속
+  `getPluginSkillPaths`, 확인일 2026-09-22). 스킬을 그 밖으로 옮기면 Claude Code 에서는 계속
   동작하면서 **다른 에이전트에서만 조용히 사라진다.** `tests/invariants.sh` 가 이 계약을 지킨다.
 - **스킬 본문은 자기 폴더만으로 완결되어야 한다.** `npx skills` 는 스킬 폴더만 복사하므로 부모
-  폴더를 가리키면 깐 쪽에서 그 파일이 없다. `repo-privacy` 가 템플릿 둘을 본문에 그대로 품는
+  폴더를 가리키면 깐 쪽에서 그 파일이 없다. 절차 문서, 스크립트, 템플릿을 모두 스킬 폴더 안에 두는
   이유가 이것이다.
+- **`PROCEDURE.md` 에 인자 자리표시자를 쓰지 않는다.** 절차 문서는 스킬로 불리지 않고 읽히기만 해서
+  어느 에이전트에서도 치환되지 않는다. 대상은 「대상 저장소」로 적는다.
 - **`description` 에 영어와 한국어를 함께 적는다.** Claude Code 밖의 에이전트는
   `disable-model-invocation` 을 모르므로 `description` 이 스킬을 고르는 유일한 신호다. 본문은
   한국어로 쓰고 「내가 쓰는 언어로 답한다」 줄에 맡긴다.
@@ -59,13 +65,16 @@
 (`source: "./plugin"`). 플러그인 설치는 폴더를 통째로 복사하고 제외 방법이 없다.
 **테스트·템플릿·문서를 `plugin/` 안에 두지 않는다.**
 
-- `plugin/skills/repo-privacy/templates/` — 대상 저장소에 복사할 원본 둘. 테스트가 이것을 본다.
-- `plugin/skills/repo-license/SKILL.md` · `templates/check-license.sh` — 좁은 스킬. 선언 대조기를 함께 싣는다.
-- `plugin/skills/repo-ci/SKILL.md` · `templates/` — 좁은 스킬. 실측기와 워크플로 골격을 함께 싣는다.
-- `plugin/skills/repo-secure/SKILL.md` · `templates/` — 좁은 스킬. 보안 검사기와 골격 둘을 함께 싣는다.
-- `plugin/skills/repo-contrib/SKILL.md` · `templates/` — 좁은 스킬. 협업 검사기와 문서 골격 다섯을 함께 싣는다.
-- `plugin/skills/repo-setup/SKILL.md` — 진입점. 실측하고 고르고 좁은 스킬을 부르고 보고한다. **세팅을 직접 하지 않는다.**
-- `plugin/skills/repo-privacy/SKILL.md` — 좁은 스킬. 템플릿 둘을 본문에 품는다.
+- `plugin/skills/repo-setup/SKILL.md` — 유일한 스킬이자 진입점. 실측하고 목적을 고르고 절차 문서를 따르고
+  보고한다. **절차 문서에 없는 세팅은 하지 않는다.**
+- `plugin/skills/repo-setup/<목적>/PROCEDURE.md` — 목적마다의 절차.
+- `plugin/skills/repo-setup/privacy/templates/` — 훅과 설정 스크립트. 대상 저장소의 `.githooks/pre-commit` 과
+  `script/setup` 이 된다. 이 저장소 루트의 사본도 여기서 온다.
+- `plugin/skills/repo-setup/license/scripts/` — 선언 대조기.
+- `plugin/skills/repo-setup/ci/scripts/` · `templates/` — 테스트 명령 실측기와 워크플로 골격.
+- `plugin/skills/repo-setup/secure/scripts/` · `templates/` — 워크플로 보안 검사기와 골격 둘.
+- `plugin/skills/repo-setup/contrib/scripts/` · `templates/` — 협업 파일 검사기와 문서 골격 다섯.
+- `script/setup` — 이 저장소의 가드를 켠다. `privacy/templates/setup` 의 사본이다.
 - `tests/` — 위 검사 명령.
 - `docs/wiki/` — 구현된 기능이 무엇을 하고 어떻게 동작하는지. 기능을 바꾸는 PR 은 그 기능의 페이지를
   같은 PR 에서 고친다. 이유는 쓰지 않고 ADR 을 링크한다.

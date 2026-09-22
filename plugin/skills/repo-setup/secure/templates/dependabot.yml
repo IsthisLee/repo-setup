@@ -1,4 +1,4 @@
-# repo-secure 가 놓는 의존성 판올림 설정이다.
+# repo-setup 의 secure 목적이 놓는 의존성 판올림 설정이다.
 # updates 항목은 그 저장소에 실제로 있는 것만 남긴다. 없는 생태계를 적으면
 # dependabot 이 조용히 아무것도 하지 않고, 켜 둔 줄 알고 넘어가게 된다.
 version: 2

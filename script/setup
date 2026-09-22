@@ -11,10 +11,10 @@
 # npm install 이 없고, 그래서 Node 의존을 들이지 않고 같은 일을 직접 한다.
 #
 # 사용법:
-#   ./setup.sh                  훅을 켠다
-#   ./setup.sh --init-patterns  공용 개인 패턴 파일의 견본을 만든다(없을 때만)
-#   ./setup.sh --force          이미 다른 훅이 있어도 덮어쓴다
-#   ./setup.sh --verify         가드가 실제로 막는지 확인한다(커밋을 만들지 않고 설정도 바꾸지 않는다)
+#   script/setup                  훅을 켠다
+#   script/setup --init-patterns  공용 개인 패턴 파일의 견본을 만든다(없을 때만)
+#   script/setup --force          이미 다른 훅이 있어도 덮어쓴다
+#   script/setup --verify         가드가 실제로 막는지 확인한다(커밋을 만들지 않고 설정도 바꾸지 않는다)
 set -u
 
 HOOKS_DIR=.githooks
@@ -35,7 +35,7 @@ verify_guard() {
   hook="$(git rev-parse --git-path hooks)/pre-commit"
   if [ ! -f "$hook" ] || [ ! -x "$hook" ]; then
     printf '%s\n' "검증 실패: git 이 돌릴 pre-commit 이 없거나 실행 비트가 없다: ${hook}" >&2
-    printf '%s\n' "  ./setup.sh 로 켜거나, 다른 훅과 공존한다면 그 훅이 ${HOOKS_DIR}/pre-commit 을 부르게 해라." >&2
+    printf '%s\n' "  script/setup 으로 켜거나, 다른 훅과 공존한다면 그 훅이 ${HOOKS_DIR}/pre-commit 을 부르게 해라." >&2
     return 1
   fi
   verify_tmp=$(mktemp -d) || die "임시 폴더를 만들지 못했다."
@@ -121,7 +121,7 @@ if [ -n "$existing" ] && [ "$existing" != "$HOOKS_DIR" ] && [ "$force" -eq 0 ]; 
   printf '%s\n' "setup: core.hooksPath 가 이미 '${existing}' 다. 덮으면 그쪽 훅이 조용히 죽는다." >&2
   printf '%s\n' "  공존하려면 그쪽 관리자의 pre-commit 에 이 한 줄을 넣어라:" >&2
   printf '%s\n' "      \"\$(git rev-parse --show-toplevel)\"/${HOOKS_DIR}/pre-commit || exit 1" >&2
-  printf '%s\n' "  기존 훅을 버리고 덮어쓰려면: ./setup.sh --force" >&2
+  printf '%s\n' "  기존 훅을 버리고 덮어쓰려면: script/setup --force" >&2
   exit 1
 fi
 if [ -z "$existing" ] && [ -n "$legacy" ] && [ "$force" -eq 0 ]; then
@@ -129,7 +129,7 @@ if [ -z "$existing" ] && [ -n "$legacy" ] && [ "$force" -eq 0 ]; then
   printf '%s\n' "  core.hooksPath 를 걸면 git 이 그 자리를 보지 않아 그 훅이 조용히 죽는다." >&2
   printf '%s\n' "  공존하려면 그 훅에서 이 한 줄을 부르게 해라. 관리자가 만든 훅이면 관리자의 설정에 넣어라:" >&2
   printf '%s\n' "      \"\$(git rev-parse --show-toplevel)\"/${HOOKS_DIR}/pre-commit || exit 1" >&2
-  printf '%s\n' "  기존 훅을 버리고 덮어쓰려면: ./setup.sh --force" >&2
+  printf '%s\n' "  기존 훅을 버리고 덮어쓰려면: script/setup --force" >&2
   exit 1
 fi
 
@@ -163,6 +163,6 @@ sources=0
 [ -f "$GLOBAL_PATTERNS" ] && { printf '%s\n' "공용 패턴: ${GLOBAL_PATTERNS}"; sources=$((sources + 1)); }
 [ -f .private/guard-patterns ] && { printf '%s\n' "저장소 패턴: .private/guard-patterns"; sources=$((sources + 1)); }
 if [ "$sources" -eq 0 ]; then
-  printf '%s\n' "주의: 개인 패턴 파일이 없어 홈 경로만 막는다. './setup.sh --init-patterns' 로 공용 목록을 만들어라."
+  printf '%s\n' "주의: 개인 패턴 파일이 없어 홈 경로만 막는다. 'script/setup --init-patterns' 로 공용 목록을 만들어라."
 fi
 exit 0

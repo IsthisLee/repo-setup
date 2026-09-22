@@ -1,18 +1,6 @@
----
-name: repo-contrib
-description: Open a repository to other people. Adds the collaboration files GitHub actually looks for (contributing guide, security policy, issue and pull request templates, code owners) and protects the default branch, choosing only what applies and verifying each file lands where GitHub reads it. 남이 들어올 수 있게 저장소를 연다. GitHub 이 실제로 찾는 자리에 기여 안내, 취약점 신고처, 이슈·PR 서식, 리뷰 담당을 놓고 기본 브랜치를 보호한다. 해당하는 것만 고르고, 놓은 자리가 맞는지 확인한다. "기여 받게 준비해줘", "이슈 템플릿", "CODEOWNERS", "브랜치 보호" 같은 요청에 쓴다.
-disable-model-invocation: true
-allowed-tools: Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion
----
-
 # 협업 준비
 
-$ARGUMENTS 저장소를 남이 들어올 수 있게 연다(기본값은 현재 저장소).
-
-윗줄에 달러 기호가 붙은 대문자 자리표시자가 그대로 보이면, 인자를 넘기지 않는 환경이다.
-그때는 현재 저장소를 대상으로 삼는다.
-
-내가 쓰는 언어로 답한다.
+대상 저장소를 남이 들어올 수 있게 연다.
 
 ## 왜 필요한가
 
@@ -25,7 +13,7 @@ $ARGUMENTS 저장소를 남이 들어올 수 있게 연다(기본값은 현재 �
 
 **기본 브랜치가 열려 있으면 실수로 직접 푸시된다.** 검사를 붙여 놨어도 우회된다.
 
-## 이 스킬이 하지 않는 것
+## 이 목적이 하지 않는 것
 
 - **해당하지 않는 저장소에 넣지 않는다.** 혼자 쓰는 비공개 실험에 CODEOWNERS 를 넣을 일이 없다.
 - **이미 있는 문서를 덮지 않는다.** 남이 쓴 안내를 조용히 갈아 끼우지 않는다. 대조해서 차이만 알린다.
@@ -39,10 +27,10 @@ $ARGUMENTS 저장소를 남이 들어올 수 있게 연다(기본값은 현재 �
 
 ## 단계
 
-1. **실측한다.** `repo-setup` 이 넘겨준 값이 있으면 다시 재지 않는다.
+1. **실측한다.** 진입점이 이미 잰 값이 있으면 다시 재지 않는다.
 
    ```bash
-   bash templates/check-contrib.sh                       # 무엇이 이미 있나
+   bash "<스킬 폴더>/contrib/scripts/check-contrib.sh"                       # 무엇이 이미 있나
    gh api repos/OWNER/REPO/branches/BRANCH/protection     # 보호 규칙. 404 면 안 걸린 것
    gh api repos/OWNER/REPO/rulesets                       # 규칙셋 쪽을 쓰는 저장소도 있다
    ```
@@ -67,8 +55,8 @@ $ARGUMENTS 저장소를 남이 들어올 수 있게 연다(기본값은 현재 �
 
    | 자리표시자 | 무엇으로 |
    |---|---|
-   | `__SETUP_COMMAND__` | 그 저장소의 설치 명령. `repo-privacy` 를 깔았으면 `./setup.sh` |
-   | `__TEST_COMMAND__` | `repo-ci` 의 실측기가 알려 준 명령 |
+   | `__SETUP_COMMAND__` | 그 저장소의 설치 명령. `privacy` 목적을 적용했으면 `script/setup` |
+   | `__TEST_COMMAND__` | `ci` 목적의 실측기가 알려 준 명령 |
    | `__COMMIT_CONVENTION__` | 그 저장소의 커밋 규칙. 없으면 사람에게 묻는다 |
    | `__CONTACT__` | 취약점 신고처. **추측하지 않는다.** 사람에게 묻는다 |
    | `__SUPPORTED__` | 지원하는 판. 모르면 「최신 판만 지원합니다」로 두되 사람에게 확인받는다 |
@@ -91,7 +79,7 @@ $ARGUMENTS 저장소를 남이 들어올 수 있게 연다(기본값은 현재 �
    JSON
    ```
 
-   `contexts` 에는 `repo-ci` 가 만든 작업 이름을 넣는다. **없는 이름을 넣으면 영원히 통과하지
+   `contexts` 에는 `ci` 목적이 만든 작업 이름을 넣는다. **없는 이름을 넣으면 영원히 통과하지
    않는다.** CI 가 없으면 이 항목을 비우고, 그 사실을 보고한다.
 
    **이 호출을 실제로 돌려 본 적은 없다.** 읽기 호출이 닿는 것만 확인했다(`Branch not protected`
@@ -100,7 +88,7 @@ $ARGUMENTS 저장소를 남이 들어올 수 있게 연다(기본값은 현재 �
 5. **검증한다.**
 
    ```bash
-   bash templates/check-contrib.sh <2단계에서 고른 항목들>
+   bash "<스킬 폴더>/contrib/scripts/check-contrib.sh" <2단계에서 고른 항목들>
    gh api repos/OWNER/REPO/branches/BRANCH/protection --jq '{checks: .required_status_checks, admins: .enforce_admins}'
    ```
 
@@ -110,12 +98,12 @@ $ARGUMENTS 저장소를 남이 들어올 수 있게 연다(기본값은 현재 �
 
 | 파일 | 하는 일 |
 |---|---|
-| `templates/check-contrib.sh` | GitHub 이 보는 자리를 모두 훑어 무엇이 있는지 본다. 항목 이름을 인자로 주면 그것만 본다 |
-| `templates/CONTRIBUTING.md` | 기여 안내 골격. 자리표시자 셋 |
-| `templates/SECURITY.md` | 취약점 신고 골격. 자리표시자 둘 |
-| `templates/pull_request_template.md` | PR 서식. 왜·무엇·근거·확인하지 못한 것 |
-| `templates/ISSUE_TEMPLATE/bug_report.md` | 버그 신고 서식 |
-| `templates/CODEOWNERS` | 리뷰 담당 골격. 자리표시자 하나 |
+| `contrib/scripts/check-contrib.sh` | GitHub 이 보는 자리를 모두 훑어 무엇이 있는지 본다. 항목 이름을 인자로 주면 그것만 본다 |
+| `contrib/templates/CONTRIBUTING.md` | 기여 안내 골격. 자리표시자 셋 |
+| `contrib/templates/SECURITY.md` | 취약점 신고 골격. 자리표시자 둘 |
+| `contrib/templates/pull_request_template.md` | PR 서식. 왜·무엇·근거·확인하지 못한 것 |
+| `contrib/templates/ISSUE_TEMPLATE/bug_report.md` | 버그 신고 서식 |
+| `contrib/templates/CODEOWNERS` | 리뷰 담당 골격. 자리표시자 하나 |
 
 ## 보고
 

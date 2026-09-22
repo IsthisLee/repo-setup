@@ -1,6 +1,6 @@
 # 테스트 워크플로 (ci)
 
-스킬 `repo-ci` 가 맡는다. 세팅 절차는 `plugin/skills/repo-ci/SKILL.md` 에 있다.
+진입점 `repo-setup` 의 목적 `ci` 다. 세팅 절차는 `plugin/skills/repo-setup/ci/PROCEDURE.md` 에 있다.
 
 ## 하는 일
 
@@ -11,16 +11,16 @@
 ## 동작
 
 **테스트가 없으면 워크플로를 만들지 않는다**([0004](../adr/0004-no-ci-without-tests.md)). 그래서 테스트
-명령이 있는지를 사람 눈이 아니라 `templates/find-test-command.sh` 가 판정한다. `npm init` 이 넣는 기본
+명령이 있는지를 사람 눈이 아니라 `ci/scripts/find-test-command.sh` 가 판정한다. `npm init` 이 넣는 기본
 자리표시자는 테스트로 보지 않는다.
 
 **파일을 놓은 것은 검증이 아니다.** 실제로 한 번 돌려 통과를 본 뒤에야 끝났다고 말한다.
-액션을 SHA 로 고정하는 것은 `repo-secure` 가 맡는다.
+액션을 SHA 로 고정하는 것은 `secure` 목적이 맡는다.
 
 ## 바꾸는 것
 
 - 대상 저장소에 `.github/workflows/tests.yml` 을 새로 놓는다. 원본은
-  `plugin/skills/repo-ci/templates/tests.yml` 이다.
+  `plugin/skills/repo-setup/ci/templates/tests.yml` 이다.
 - 이미 워크플로가 있으면 덮지 않고, 실측한 테스트 명령과 어긋나는 곳만 알린다.
 
 ## 한계와 알려진 문제
@@ -29,9 +29,9 @@
 
 ## 관련 파일
 
-- `plugin/skills/repo-ci/SKILL.md`
-- `plugin/skills/repo-ci/templates/find-test-command.sh`
-- `plugin/skills/repo-ci/templates/tests.yml`
+- `plugin/skills/repo-setup/ci/PROCEDURE.md`
+- `plugin/skills/repo-setup/ci/scripts/find-test-command.sh`
+- `plugin/skills/repo-setup/ci/templates/tests.yml`
 - `tests/ci/unit.sh`
 
 ## 관련 ADR

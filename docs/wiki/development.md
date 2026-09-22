@@ -11,7 +11,7 @@
 ### 구조
 
 저장소는 두 층이다. `plugin/` 만 사용자에게 실리고, 테스트와 문서는 그 밖에 둔다. 스킬은
-`plugin/skills/` 아래에 있다. 폴더마다 무엇을 두는지는 `CLAUDE.md` 의 「구조」 절에 있다.
+`plugin/skills/repo-setup/` 하나이고, 목적마다 그 안에 폴더가 있다. 폴더마다 무엇을 두는지는 `CLAUDE.md` 의 「구조」 절에 있다.
 
 ### 테스트
 
@@ -37,7 +37,7 @@ tests/guard/unit.sh && tests/setup/unit.sh && tests/license/unit.sh && tests/ci/
 
 ### 기여
 
-커밋 가드를 켜려면 클론한 뒤 `./setup.sh` 를 한 번 돌린다. 이 저장소의 가드는 스킬 템플릿의 사본이고,
+커밋 가드를 켜려면 클론한 뒤 `script/setup` 을 한 번 돌린다. 이 저장소의 가드는 스킬 템플릿의 사본이고,
 `tests/invariants.sh` 가 둘이 같은지 본다. 규칙과 커밋 메시지 형식은 `CLAUDE.md` 의 「규칙」 절에 있다.
 
 ## 바꾸는 것
@@ -60,7 +60,7 @@ tests/guard/unit.sh && tests/setup/unit.sh && tests/license/unit.sh && tests/ci/
 
 ## 관련 ADR
 
-- [0002. 목적별로 좁은 스킬 다섯을 둔다](../adr/0002-five-narrow-skills-by-purpose.md)
+- [0006. 스킬 하나에 목적별 폴더를 둔다](../adr/0006-single-skill-with-purpose-folders.md)
 
 ## 확인한 외부 사실
 
@@ -70,7 +70,7 @@ tests/guard/unit.sh && tests/setup/unit.sh && tests/license/unit.sh && tests/ci/
    탐색 경로에 더한다. 스킬을 `plugin/skills/` 에 두는 이유가 이것이다.
 2. **실측**, 2026-09-22. 스킬 폴더의 하위 파일이 함께 복사되고 실행 비트도 보존된다. 공식 문서에
    없어 빈 저장소에 CLI 1.7.0 으로 직접 설치해 확인했다. 그래서 템플릿은 스킬 본문에 인용하지 않고
-   `<스킬>/templates/` 에 실제 파일로 둔다.
+   `<목적>/templates/` 와 `<목적>/scripts/` 에 실제 파일로 둔다.
 3. **공식 문서**, Claude Code [Plugin marketplaces](https://code.claude.com/docs/en/plugin-marketplaces),
    2026-09-22 확인. "when users install a plugin, Claude Code copies the plugin directory to a cache
    location, unless the plugin loads in place."(번역: 사용자가 플러그인을 설치하면, 제자리에서 불러오는

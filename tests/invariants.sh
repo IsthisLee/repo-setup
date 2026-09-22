@@ -4,6 +4,7 @@
 set -u
 export PYTHONUTF8=1 PYTHONIOENCODING=utf-8
 R="$(cd "$(dirname "$0")/.." && pwd)"
+SK="$R/plugin/skills/repo-setup"
 fail=0
 ok()  { echo "✅ $1"; }
 bad() { echo "❌ $1"; fail=$((fail+1)); }
@@ -29,24 +30,27 @@ done
 if [ -z "$mismatch" ]; then ok "스킬 폴더명과 name 이 전부 같다"
 else bad "폴더명과 name 이 어긋난 스킬이 있다:$mismatch"; fi
 
-# 스킬 수는 조용히 낡는다. 문서가 적은 숫자와 실제가 어긋나면 사람이 못 본다.
+# 스킬은 repo-setup 하나이고 목적은 그 안의 폴더다. 스킬을 다시 나누면 진입점이
+# disable-model-invocation 이 걸린 스킬을 부를 수 없는 문제가 되살아난다.
 n_sk=$(find "$R/plugin/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
-if [ "$n_sk" = 6 ]; then ok "스킬이 여섯이다(repo-setup + 좁은 스킬 다섯)"
-else bad "스킬이 여섯이 아니다(${n_sk}개). 문서와 이 숫자를 함께 고쳐라"; fi
+if [ "$n_sk" = 1 ] && [ -f "$SK/SKILL.md" ]; then ok "스킬이 repo-setup 하나다"
+else bad "스킬이 repo-setup 하나가 아니다(${n_sk}개). 목적은 repo-setup 안의 폴더로 둔다"; fi
 
-# 진입점이 부를 좁은 스킬 목록과 실제 폴더가 어긋나면, 없는 것을 부르거나 있는 것을 모른다.
-# 둘 다 조용히 일어난다. repo-setup 본문의 표에 적힌 이름과 실제 폴더를 대조한다.
-if python3 - "$R" <<'ROUTE'
+# 진입점이 고를 목적 목록과 실제 폴더가 어긋나면, 없는 것을 읽으려 하거나 있는 것을 모른다.
+# 둘 다 조용히 일어난다. 진입점 표의 첫 칸과 목적 폴더를 대조하고, 폴더마다 절차 문서가 있는지 본다.
+if python3 - "$SK" <<'ROUTE'
 import pathlib, re, sys
-root = pathlib.Path(sys.argv[1])
-body = (root / "plugin/skills/repo-setup/SKILL.md").read_text(encoding="utf-8")
+sk = pathlib.Path(sys.argv[1])
+body = (sk / "SKILL.md").read_text(encoding="utf-8")
 listed = set(re.findall(r"^\| `([a-z][a-z0-9-]*)` \|", body, re.M))
-actual = {d.name for d in (root / "plugin/skills").iterdir() if d.is_dir()} - {"repo-setup"}
-assert listed, "repo-setup 본문에 좁은 스킬 표가 없다"
-assert listed == actual, f"repo-setup 이 적은 목록 {sorted(listed)} 와 실제 스킬 {sorted(actual)} 이 다르다"
+actual = {d.name for d in sk.iterdir() if d.is_dir()}
+assert listed, "진입점 본문에 목적 표가 없다"
+assert listed == actual, f"진입점이 적은 목적 {sorted(listed)} 와 실제 폴더 {sorted(actual)} 가 다르다"
+missing = sorted(d for d in actual if not (sk / d / "PROCEDURE.md").is_file())
+assert not missing, "PROCEDURE.md 가 없는 목적: " + ", ".join(missing)
 ROUTE
-then ok "repo-setup 이 적은 좁은 스킬 목록이 실제와 같다"
-else bad "repo-setup 의 좁은 스킬 표가 실제와 다르다. 표를 고쳐라"; fi
+then ok "진입점의 목적 표가 목적 폴더와 같고 폴더마다 PROCEDURE.md 가 있다"
+else bad "진입점의 목적 표가 실제와 다르거나 PROCEDURE.md 가 빠졌다"; fi
 
 # npx skills 는 마켓플레이스의 source 아래 skills/ 를 탐색 경로에 더한다(CLI 1.7.0 의
 # getPluginSkillPaths). 스킬을 그 밖으로 옮기면 Claude Code 에서는 계속 동작하면서
@@ -93,6 +97,7 @@ else bad "description 이 영어와 한국어를 함께 적지 않는다"; fi
 # Claude Code 는 인자 자리표시자를 치환하지만 다른 에이전트는 치환하지 않아 글자가 그대로 남는다.
 # 폴백 문장이 없으면 그 에이전트에서 스킬이 자리표시자를 값으로 착각한다.
 # 폴백 문장 안에 자리표시자를 다시 쓰면 그것까지 치환되므로 '달러 기호' 로 풀어 가리킨다.
+# PROCEDURE.md 는 스킬로 불리지 않고 읽히기만 하므로 어느 에이전트에서도 치환되지 않는다.
 if python3 - "$R" <<'ARGS'
 import pathlib, sys
 root = pathlib.Path(sys.argv[1])
@@ -103,23 +108,53 @@ for d in sorted((root / "plugin/skills").iterdir()):
         continue
     body = (d / "SKILL.md").read_text(encoding="utf-8")
     if token in body and "달러 기호" not in body:
-        bad.append(d.name)
-assert not bad, "자리표시자를 쓰면서 치환 실패 폴백이 없는 스킬: " + ", ".join(bad)
+        bad.append(f"{d.name}/SKILL.md(폴백 없음)")
+    for proc in sorted(d.glob("*/PROCEDURE.md")):
+        if token in proc.read_text(encoding="utf-8"):
+            bad.append(f"{d.name}/{proc.parent.name}/PROCEDURE.md(치환되지 않는 자리표시자)")
+assert not bad, "자리표시자가 치환되지 않는 곳: " + ", ".join(bad)
 ARGS
-then ok "자리표시자를 쓰는 스킬에 치환 실패 폴백이 있다"
-else bad "자리표시자가 치환되지 않는 에이전트에서 깨진다. 폴백 문장을 넣어라"; fi
+then ok "자리표시자는 폴백이 있는 SKILL.md 에만 있다"
+else bad "자리표시자가 치환되지 않는 에이전트나 문서에서 깨진다"; fi
 
-# npx skills 는 스킬 폴더만 복사한다. 부모 폴더를 가리키면 깐 쪽에서 파일을 못 찾고,
-# 그 사실이 설치 시점에는 드러나지 않는다.
+# npx skills 는 스킬 폴더만 복사한다. 부모 폴더나 이 저장소의 docs/ 를 가리키면 깐 쪽에서 파일을
+# 못 찾고, 그 사실이 설치 시점에는 드러나지 않는다. docs/ 는 대상 저장소의 docs/ 와 구별하려고
+# 이 저장소에만 있는 하위 폴더 이름으로 본다.
 if python3 - "$R" <<'SELF'
-import pathlib, sys
+import pathlib, re, sys
 root = pathlib.Path(sys.argv[1])
-bad = [d.name for d in sorted((root / "plugin/skills").iterdir())
-       if d.is_dir() and "../" in (d / "SKILL.md").read_text(encoding="utf-8")]
-assert not bad, "부모 폴더를 가리키는 스킬: " + ", ".join(bad)
+bad = []
+for f in sorted((root / "plugin/skills").rglob("*.md")):
+    text = f.read_text(encoding="utf-8")
+    rel = f.relative_to(root / "plugin/skills")
+    if "../" in text:
+        bad.append(f"{rel}(../)")
+    if re.search(r"docs/(adr|wiki|decisions)", text):
+        bad.append(f"{rel}(이 저장소의 docs/)")
+assert not bad, "스킬 폴더 밖을 가리키는 문서: " + ", ".join(bad)
 SELF
-then ok "스킬 본문이 자기 폴더 밖을 가리키지 않는다"
-else bad "스킬이 부모 폴더를 가리킨다. 깐 쪽에서는 그 파일이 없다"; fi
+then ok "스킬 문서가 자기 폴더 밖을 가리키지 않는다"
+else bad "스킬 문서가 폴더 밖을 가리킨다. 깐 쪽에서는 그 파일이 없다"; fi
+
+# 절차 문서가 스크립트나 템플릿을 이름으로 가리키는데 그 파일이 없으면, 그 단계에서야 멈춘다.
+# 경로는 스킬 폴더 기준 <목적>/(scripts|templates)/… 로 적는다.
+if python3 - "$SK" <<'REFS'
+import pathlib, re, sys
+sk = pathlib.Path(sys.argv[1])
+purposes = "|".join(sorted(d.name for d in sk.iterdir() if d.is_dir()))
+pat = re.compile(rf"(?<![\w.-])((?:{purposes})/(?:scripts|templates)/[\w./-]*\w)")
+bad = []
+docs = [sk / "SKILL.md", *sorted(sk.glob("*/PROCEDURE.md"))]
+for doc in docs:
+    for p in pat.findall(doc.read_text(encoding="utf-8")):
+        if not (sk / p).exists():
+            bad.append(f"{doc.relative_to(sk)}: {p}")
+assert not bad, "가리키는 파일이 없다: " + ", ".join(bad)
+n = sum(len(pat.findall(d.read_text(encoding="utf-8"))) for d in docs)
+assert n, "절차 문서가 스크립트나 템플릿을 하나도 가리키지 않는다. 경로 형식이 바뀌었는지 봐라"
+REFS
+then ok "절차 문서가 가리키는 스크립트와 템플릿이 모두 있다"
+else bad "절차 문서가 없는 파일을 가리킨다"; fi
 
 # 매니페스트 둘의 description 은 같은 문장을 복제한 것이라 한쪽만 고치면 조용히 어긋난다.
 # 설명이 스킬을 열거하면 스킬을 더할 때마다 낡는다. 낡은 문장은
@@ -143,17 +178,19 @@ MAN
 then ok "매니페스트 description 이 서로 같고 스킬을 열거하지 않는다"
 else bad "매니페스트 description 이 어긋났거나 스킬을 열거한다"; fi
 
-# 템플릿에 실행 비트가 없으면 깐 사람이 첫 줄에서 멈춘다.
+# 스크립트와 훅 템플릿에 실행 비트가 없으면 깐 사람이 첫 줄에서 멈춘다.
 # npx skills 는 스킬 폴더를 통째로 가져가며 실행 비트를 보존한다(CLI 1.7.0, 2026-09-22 실측).
-TPL="$R/plugin/skills/repo-privacy/templates"
-for t in pre-commit setup.sh; do
-  if [ -x "$TPL/$t" ]; then ok "스킬의 templates/${t} 에 실행 비트가 있다"
-  else bad "스킬의 templates/${t} 가 없거나 실행 비트가 없다"; fi
+TPL="$SK/privacy/templates"
+noexec=""
+for f in "$SK"/*/scripts/*.sh "$TPL/pre-commit" "$TPL/setup"; do
+  [ -x "$f" ] || noexec="$noexec ${f#"$SK"/}"
 done
+if [ -z "$noexec" ]; then ok "스크립트와 훅 템플릿에 실행 비트가 있다"
+else bad "실행 비트가 없거나 파일이 없다:$noexec"; fi
 
 # 저장소 루트의 가드는 템플릿의 사본이다. 어긋나면 이 저장소가 배포하는 것과
 # 스스로 쓰는 것이 달라지고, 그 사실이 겉으로 드러나지 않는다.
-for pair in ".githooks/pre-commit:pre-commit" "setup.sh:setup.sh"; do
+for pair in ".githooks/pre-commit:pre-commit" "script/setup:setup"; do
   copy="${pair%%:*}"; src="${pair##*:}"
   if [ -f "$R/$copy" ] && diff -q "$R/$copy" "$TPL/$src" >/dev/null 2>&1; then ok "${copy} 가 템플릿과 같다"
   else bad "${copy} 가 템플릿과 다르다. 템플릿에서 다시 복사해라"; fi
@@ -161,20 +198,17 @@ done
 
 # 템플릿을 본문에 다시 인용하면 정본이 둘이 되어 한쪽이 낡는다.
 # 파일로 두는 편이 부르는 비용도 낮다.
-if python3 - "$R" <<'QUOTE'
+if python3 - "$SK" <<'QUOTE'
 import pathlib, sys
-root = pathlib.Path(sys.argv[1])
+sk = pathlib.Path(sys.argv[1])
+body = "\n".join(p.read_text(encoding="utf-8") for p in [sk / "SKILL.md", *sorted(sk.glob("*/PROCEDURE.md"))])
 bad = []
-for d in sorted((root / "plugin/skills").iterdir()):
-    if not d.is_dir() or not (d / "templates").is_dir():
+for t in sorted(sk.glob("*/templates/**/*")) + sorted(sk.glob("*/scripts/*")):
+    if not t.is_file():
         continue
-    body = (d / "SKILL.md").read_text(encoding="utf-8")
-    for t in sorted((d / "templates").iterdir()):
-        if not t.is_file():
-            continue
-        head = "\n".join(t.read_text(encoding="utf-8").splitlines()[:8])
-        if head and head in body:
-            bad.append(f"{d.name}/{t.name}")
+    head = "\n".join(t.read_text(encoding="utf-8").splitlines()[:8])
+    if head and head in body:
+        bad.append(str(t.relative_to(sk)))
 assert not bad, "본문이 템플릿을 그대로 인용한다: " + ", ".join(bad)
 QUOTE
 then ok "스킬 본문이 템플릿을 다시 인용하지 않는다"
@@ -187,13 +221,12 @@ else bad "훅 템플릿의 기본 경로 목록이 '.private/*' 하나가 아니
 
 # 문서는 README(무엇·설치), docs/wiki(구현된 기능), docs/adr(이유)로 나뉜다.
 # 목적을 더하고 wiki 페이지를 빠뜨리거나 목차에 올리지 않으면, 그 기능의 설명이 조용히 사라진다.
-# 목적 이름은 스킬 폴더에서 읽는다. 목록을 여기에 적으면 목적을 더할 때 이 검사도 낡는다.
+# 목적 이름은 목적 폴더에서 읽는다. 목록을 여기에 적으면 목적을 더할 때 이 검사도 낡는다.
 if python3 - "$R" <<'WIKI'
 import pathlib, re, sys
 root = pathlib.Path(sys.argv[1])
 wiki = root / "docs/wiki"
-purposes = {d.name.removeprefix("repo-") for d in (root / "plugin/skills").iterdir()
-            if d.is_dir() and d.name != "repo-setup"}
+purposes = {d.name for d in (root / "plugin/skills/repo-setup").iterdir() if d.is_dir()}
 missing = sorted(p for p in purposes if not (wiki / f"{p}.md").is_file())
 assert not missing, "wiki 페이지가 없는 목적: " + ", ".join(missing)
 index = (wiki / "README.md").read_text(encoding="utf-8")
@@ -260,8 +293,9 @@ then ok "ADR 이름이 형식에 맞고 목록이 모든 ADR 을 가리킨다"
 else bad "ADR 이름이 형식과 다르거나 목록에서 빠진 ADR 이 있다"; fi
 
 # 개인 패턴이 저장소에 새어 들어가면 안 된다. 이 저장소가 다루는 주제가 바로 그것이다.
+# 훅 템플릿과 테스트는 막을 패턴과 탐침을 담고 있어서 뺀다.
 if git -C "$R" ls-files 2>/dev/null | grep -q .; then
-  leak=$(git -C "$R" grep -lE '/Users/[A-Za-z]|/home/[A-Za-z]' -- . 2>/dev/null | grep -v '^plugin/skills/[a-z-]*/templates/' | grep -v '^tests/' || true)
+  leak=$(git -C "$R" grep -lE '/Users/[A-Za-z]|/home/[A-Za-z]' -- . 2>/dev/null | grep -v '^plugin/skills/repo-setup/[a-z]*/templates/' | grep -v '^tests/' || true)
   if [ -z "$leak" ]; then ok "추적 파일에 홈 경로가 없다"
   else bad "홈 경로가 든 파일이 있다"; printf '%s\n' "$leak" | sed 's/^/    /'; fi
 else

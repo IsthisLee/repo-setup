@@ -7,7 +7,7 @@
 set -u
 export PYTHONUTF8=1 PYTHONIOENCODING=utf-8
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-S="$ROOT/plugin/skills/repo-ci/templates/find-test-command.sh"
+S="$ROOT/plugin/skills/repo-setup/ci/scripts/find-test-command.sh"
 T="$(mktemp -d)"; trap 'rm -rf "$T"' EXIT
 fail=0
 check() { if [ "$1" = "$2" ]; then echo "✅ $3"; else echo "❌ $3 (기대=$1 실측=$2)"; fail=$((fail+1)); fi; }
@@ -73,7 +73,7 @@ check 1 "$(code "$d")" "testdata 대상을 test 로 보지 않는다"
 echo
 # ── 워크플로 골격 ──────────────────────────────────────────────────────────
 # 워크플로는 돌려 보기 전에는 틀린 것이 드러나지 않는다. 구조만이라도 못박아 둔다.
-W="$ROOT/plugin/skills/repo-ci/templates/tests.yml"
+W="$ROOT/plugin/skills/repo-setup/ci/templates/tests.yml"
 has() { grep -qE "$1" "$W" && echo yes || echo no; }
 
 check yes "$([ -f "$W" ] && echo yes || echo no)" "워크플로 골격이 있다"
