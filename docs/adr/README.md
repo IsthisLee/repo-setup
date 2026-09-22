@@ -13,7 +13,8 @@
 | 번호 | 제목 | 상태 |
 |---|---|---|
 | 0001 | [저장소 층만 다룬다](0001-repository-layer-only.md) | 승인 |
-| 0002 | [목적별로 좁은 스킬 다섯을 둔다](0002-five-narrow-skills-by-purpose.md) | 승인 |
+| 0002 | [목적별로 좁은 스킬 다섯을 둔다](0002-five-narrow-skills-by-purpose.md) | 대체됨(→ 0006) |
 | 0003 | [겹치는 파일과 설정의 소유를 정한다](0003-ownership-of-overlapping-files.md) | 승인 |
 | 0004 | [테스트 없는 저장소에 CI 를 만들지 않는다](0004-no-ci-without-tests.md) | 승인 |
 | 0005 | [팀 저장소의 공유 자산은 제안만 한다](0005-team-repos-propose-only.md) | 승인 |
+| 0006 | [한 스킬에 목적별 폴더를 둔다](0006-single-skill-with-purpose-folders.md) | 승인 |

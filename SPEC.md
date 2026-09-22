@@ -371,7 +371,7 @@ main 보호 (룰셋)
 
 | 번호 | 제목 | 더하는 PR | 이 스펙의 결정 |
 |---|---|---|---|
-| 0006 | 스킬 하나에 목적별 폴더를 둔다(0002 를 대체) | ③ | 1 |
+| 0006 | 한 스킬에 목적별 폴더를 둔다(0002 를 대체) | ③ | 1 |
 | 0007 | 설명 카드로 두 번 확인받고 변경은 브랜치와 PR 로 올린다 | ④ | 17, 18 |
 | 0008 | 판정은 검증된 도구와 GitHub API 에 맡기고 가드만 bash 와 git 으로 둔다 | ⑩·⑪·⑫ 중 먼저 병합되는 것 | 2, 3, 6, 7, 8, 20 |
 | 0009 | GitHub 설정은 계획을 먼저 보이고 --apply 로만 바꾼다 | ⑩ | 9 |
@@ -486,6 +486,8 @@ main 보호 (룰셋)
 18. **공식 문서**, [lefthook](https://lefthook.dev/): 언어와 무관한 단일 실행 파일이고 npm, pip, gem, go, Homebrew 등으로 설치한다. `lefthook install` 이 "installs the configured hooks into `.git/hooks/`"(번역: 설정한 훅을 `.git/hooks/` 에 설치한다). npm 으로 설치할 때 `lefthook install` 이 자동으로 도는지는 이 문서에서 확인하지 못했다.
 19. **실측**, git 2.53.0 의 `man githooks` 와 `man git-init`: 훅은 `$GIT_DIR/hooks` 나 `core.hooksPath` 가 가리키는 폴더에서만 찾는다. `git init`(과 `git clone`)은 템플릿 폴더의 파일을 새 `$GIT_DIR` 로 복사하고, 템플릿 폴더는 `--template`, `$GIT_TEMPLATE_DIR`, `init.templateDir`, 기본 폴더 순으로 정해진다. "Running git init in an existing repository is safe. It will not overwrite things that are already there."(번역: 이미 있는 저장소에서 git init 을 실행해도 안전하다. 이미 있는 것을 덮어쓰지 않는다.) 설정만으로 훅을 거는 `hook.<이름>.command` 는 이 판의 `man git-config` 에서 찾지 못했다. 그래서 클론만으로 저장소 안의 훅이 켜지는 구성은 없고, 켜는 단계가 어딘가에 반드시 있다.
 20. **공개 저장소**, GitHub [actions/runner-images](https://github.com/actions/runner-images): README 의 표에서 `ubuntu-latest` 는 Ubuntu 24.04(x64)이고 `macos-latest` 는 macOS 26 Arm64 다. `images/ubuntu/Ubuntu2404-Readme.md` 에는 Bash 5.2.21 과 apt 패키지 `shellcheck` `0.9.0-1` 이 있다. `images/macos/macos-26-arm64-Readme.md` 에는 Bash 3.2.57 이 있고 shellcheck 는 없다. 그리고 **실측**으로, shellcheck 공식 릴리스 v0.11.0 의 `linux.x86_64`·`darwin.aarch64` tar.gz 자산을 받아 잰 sha256 이 릴리스 API 의 `digest` 값과 같았다.
+21. **실측**, Claude Code 2.1.278 의 플러그인 업데이트(③ 에서 확인). 설정 폴더를 `CLAUDE_CONFIG_DIR` 로 격리하고 `claude plugin marketplace add IsthisLee/repo-setup` 으로 main(0.1.0)을 설치하니 `claude plugin details` 가 `Skills (6)` 을 보였다. 마켓플레이스 복제본을 ③ 의 커밋으로 옮긴 뒤 `claude plugin update repo-setup@repo-setup` 은 "updated from 0.1.0 to 0.2.0" 을 내고 `Skills (1)  repo-setup` 이 되었다. 캐시는 판 번호별 폴더(`cache/repo-setup/repo-setup/0.1.0/`, `0.2.0/`)이고 0.1.0 폴더는 남았다. `claude plugin marketplace update` 가 main 을 받아 오는 단계는 이 시험에서 거치지 않았다. `file://` 주소는 마켓플레이스 출처로 받지 않았다("Invalid marketplace source format").
+22. **실측**, `skills` CLI 1.7.0(③ 에서 확인). 가짜 홈의 임시 프로젝트에 옛 판(main)을 `add <로컬 사본> -y -a claude-code` 로 설치하니 `.claude/skills/` 에 스킬 여섯이 놓였다. 새 판을 같은 방식으로 설치하면 `repo-setup` 은 목적 폴더가 든 새 구조로 바뀌고 실행 비트도 보존되지만, 옛 스킬 다섯의 폴더와 `skills-lock.json` 항목은 남았다. `remove repo-privacy repo-license repo-ci repo-secure repo-contrib -y` 가 다섯을 지웠고, 전역 설치에서도 `-g` 를 붙여 같은 결과가 나왔다. GitHub 에서 받는 `add IsthisLee/repo-setup` 은 새 판이 main 에 들어가기 전이라 시험하지 않았다.
 
 ## 7. 구현 전에 확인할 것 (아직 확인하지 않음)
 
@@ -495,7 +497,6 @@ main 보호 (룰셋)
 - secret scanning: 쓸 수 없는 저장소에서 `PATCH` 가 내는 상태 코드와 메시지, push protection 이 동료의 푸시를 거절할 때의 메시지.
 - dependabot: 생태계마다 한 번에 여는 PR 수의 기본 상한.
 - GitHub 라이선스 템플릿: 지원할 키마다의 자리표시자 목록(`[year]`, `[fullname]` 외).
-- 이전 판에서 옮겨 오기: 플러그인으로 설치한 경우 업데이트할 때 옛 스킬이 사라지는지, `npx skills` 로 설치한 경우 옛 스킬 폴더를 지우는 명령.
 - husky: 지금 판의 설치 명령과 `.husky/` 훅 파일 형식, `husky` 가 `core.hooksPath` 를 쓰는지(공식 문서에서는 확인하지 못했고, 이 저장소 `setup.sh` 주석의 실측 기록만 있다), `HUSKY=0` 의 동작, git 저장소 밖에서 `npm install` 할 때의 동작.
 - pre-commit 프레임워크: `repo: local` 훅의 `language` 값(2026-09-22 문서에서는 `unsupported_script`), commit-msg 단계에 걸 때의 `stages` 값, 커밋할 때 스테이징하지 않은 변경을 잠시 치웠다 되돌리는 동작이 가드의 인덱스 검사와 부딪히지 않는지.
 - lefthook: 지금 판의 `lefthook.yml` 형식(문서 예시는 `jobs`), commit-msg 훅에 메시지 파일 경로를 넘기는 방법.
@@ -622,5 +623,6 @@ GitHub 없이 로컬 임시 저장소 넷을 만들어 privacy 만 돌린다(`/r
 |---|---|---|
 | PR #1 | 병합(2026-09-22, 두 러너에서 177건 통과) | https://github.com/IsthisLee/repo-setup/pull/1 |
 | ① | 병합(2026-09-22) | https://github.com/IsthisLee/repo-setup/pull/2 |
-| ② | 열림, 두 러너 통과(2026-09-22), 병합 대기 | https://github.com/IsthisLee/repo-setup/pull/3 |
-| ③ ~ ⑭ | 대기 | |
+| ② | 병합(2026-09-22) | https://github.com/IsthisLee/repo-setup/pull/3 |
+| ③ | 열림, 두 러너 통과(2026-09-22), 병합 대기 | https://github.com/IsthisLee/repo-setup/pull/4 |
+| ④ ~ ⑭ | 대기 | |

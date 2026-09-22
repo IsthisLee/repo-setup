@@ -7,7 +7,7 @@
 set -u
 export PYTHONUTF8=1 PYTHONIOENCODING=utf-8
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-S="$ROOT/plugin/skills/repo-license/templates/check-license.sh"
+S="$ROOT/plugin/skills/repo-setup/license/scripts/check-license.sh"
 T="$(mktemp -d)"; trap 'rm -rf "$T"' EXIT
 fail=0
 check() { if [ "$1" = "$2" ]; then echo "✅ $3"; else echo "❌ $3 (기대=$1 실측=$2)"; fail=$((fail+1)); fi; }

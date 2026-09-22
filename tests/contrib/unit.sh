@@ -6,7 +6,7 @@
 set -u
 export PYTHONUTF8=1 PYTHONIOENCODING=utf-8
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-S="$ROOT/plugin/skills/repo-contrib/templates/check-contrib.sh"
+S="$ROOT/plugin/skills/repo-setup/contrib/scripts/check-contrib.sh"
 T="$(mktemp -d)"; trap 'rm -rf "$T"' EXIT
 fail=0
 check() { if [ "$1" = "$2" ]; then echo "✅ $3"; else echo "❌ $3 (기대=$1 실측=$2)"; fail=$((fail+1)); fi; }
@@ -70,7 +70,7 @@ put "$d" .github/ISSUE_TEMPLATE/bug_report.md; put "$d" .github/pull_request_tem
 check 0 "$(code "$d")" "다섯이 모두 있으면 통과한다"
 
 # ── 함께 싣는 골격 ─────────────────────────────────────────────────────────
-TP="$ROOT/plugin/skills/repo-contrib/templates"
+TP="$ROOT/plugin/skills/repo-setup/contrib/templates"
 for f in CONTRIBUTING.md SECURITY.md pull_request_template.md CODEOWNERS; do
   check yes "$([ -f "$TP/$f" ] && echo yes || echo no)" "${f} 골격이 있다"
 done

@@ -1,18 +1,6 @@
----
-name: repo-ci
-description: Set up a test workflow that actually runs on every push and pull request, and prove it by watching one real run finish green. It measures the repository's own test command first and refuses to create a workflow when there is none, because an empty CI reports success while checking nothing. 푸시와 풀 리퀘스트마다 테스트가 자동으로 도는 워크플로를 놓고, 실제로 한 번 돌려 통과를 확인한다. 저장소의 테스트 명령을 먼저 실측하고, 테스트가 없으면 워크플로를 만들지 않는다. "CI 붙여줘", "테스트 자동으로 돌게", "GitHub Actions 세팅" 같은 요청에 쓴다.
-disable-model-invocation: true
-allowed-tools: Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion
----
-
 # 테스트 워크플로
 
-$ARGUMENTS 저장소에 테스트 워크플로를 놓는다(기본값은 현재 저장소).
-
-윗줄에 달러 기호가 붙은 대문자 자리표시자가 그대로 보이면, 인자를 넘기지 않는 환경이다.
-그때는 현재 저장소를 대상으로 삼는다.
-
-내가 쓰는 언어로 답한다.
+대상 저장소에 테스트 워크플로를 놓는다.
 
 ## 왜 필요한가
 
@@ -22,13 +10,13 @@ $ARGUMENTS 저장소에 테스트 워크플로를 놓는다(기본값은 현재 
 **빈 CI 는 있는 것보다 나쁘다.** 아무것도 검사하지 않으면서 초록 표시를 준다. 그 표시를 브랜치
 보호의 필수 검사로 걸면 보호가 껍데기가 되고, 사람은 보호가 있다고 믿는다.
 
-## 이 스킬이 하지 않는 것
+## 이 목적이 하지 않는 것
 
 - **테스트가 없으면 워크플로를 만들지 않는다.** 테스트를 쓰는 것이 먼저다. 그 사실을 보고한다.
 - **기존 워크플로를 덮지 않는다.** 남이 돌리고 있는 것을 조용히 바꾸면 무엇이 달라졌는지 아무도
   모른다. 대조해서 차이만 알린다.
 - **돌려 보지 않은 운영체제나 버전을 매트릭스에 넣지 않는다.** 매트릭스는 희망이 아니라 실측이다.
-- **액션을 SHA 로 고정하지 않는다.** 그것은 `repo-secure` 가 맡는다. 이 스킬만 돌렸으면 **액션이
+- **액션을 SHA 로 고정하지 않는다.** 그것은 `secure` 목적이 맡는다. 이 목적만 돌렸으면 **액션이
   고정되지 않은 상태라는 사실을 보고에 적는다.**
 
 ## 팀 저장소일 때
@@ -38,10 +26,10 @@ $ARGUMENTS 저장소에 테스트 워크플로를 놓는다(기본값은 현재 
 
 ## 단계
 
-1. **실측한다.** `repo-setup` 이 넘겨준 값이 있으면 다시 재지 않는다.
+1. **실측한다.** 진입점이 이미 잰 값이 있으면 다시 재지 않는다.
 
    ```bash
-   bash templates/find-test-command.sh          # 표준 출력이 명령, 표준 오류가 근거
+   bash "<스킬 폴더>/ci/scripts/find-test-command.sh"          # 표준 출력이 명령, 표준 오류가 근거
    git symbolic-ref --short HEAD                # 기본 브랜치
    ls .github/workflows/ 2>/dev/null            # 이미 있는 것
    ```
@@ -52,7 +40,7 @@ $ARGUMENTS 저장소에 테스트 워크플로를 놓는다(기본값은 현재 
 3. **이미 워크플로가 있으면 덮지 않는다.** 그 파일이 무엇을 언제 돌리는지 읽고, 지금 실측한
    테스트 명령과 어긋나는 곳만 알린다. 고칠지는 사람이 정한다.
 
-4. **골격을 놓는다.** 이 스킬 폴더의 `templates/tests.yml` 을 `.github/workflows/tests.yml` 로
+4. **골격을 놓는다.** 스킬 폴더의 `ci/templates/tests.yml` 을 `.github/workflows/tests.yml` 로
    복사하고 자리표시자를 1단계의 실측값으로 바꾼다.
 
    | 자리표시자 | 무엇으로 |
@@ -77,15 +65,15 @@ $ARGUMENTS 저장소에 테스트 워크플로를 놓는다(기본값은 현재 
    **통과를 보기 전에는 세팅됐다고 보고하지 않는다.** 실패했으면 워크플로가 틀린 것인지 테스트가
    틀린 것인지 가려서 적는다. 둘은 고치는 사람이 다르다.
 
-7. **액션 고정을 넘긴다.** `repo-secure` 가 이 파일의 `uses:` 를 SHA 로 바꾼다. 이 스킬은 하지
-   않는다. 단독으로 불렸으면 그 사실을 보고에 적는다.
+7. **액션 고정을 넘긴다.** `secure` 목적이 이 파일의 `uses:` 를 SHA 로 바꾼다. 이 목적은 하지
+   않는다. 이 목적만 골랐으면 그 사실을 보고에 적는다.
 
 ## 템플릿
 
 | 파일 | 하는 일 |
 |---|---|
-| `templates/find-test-command.sh` | 테스트 명령을 실측한다. 0 찾음 · 1 못 찾음 · 2 git 저장소 아님 |
-| `templates/tests.yml` | 워크플로 골격. 자리표시자 셋을 실측값으로 바꿔 쓴다 |
+| `ci/scripts/find-test-command.sh` | 테스트 명령을 실측한다. 0 찾음 · 1 못 찾음 · 2 git 저장소 아님 |
+| `ci/templates/tests.yml` | 워크플로 골격. 자리표시자 셋을 실측값으로 바꿔 쓴다 |
 
 실측기가 보는 것은 순서대로 `.check.toml` 의 `test_command`, `package.json` 의 `scripts.test`,
 `Makefile` 의 `test` 대상, `pyproject.toml` 의 pytest 설정, `Cargo.toml`, `go.mod` 다.

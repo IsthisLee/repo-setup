@@ -1,4 +1,4 @@
-# repo-secure 가 놓는 코드 스캐닝 워크플로다. 자리표시자를 실측값으로 바꿔 쓴다.
+# repo-setup 의 secure 목적이 놓는 코드 스캐닝 워크플로다. 자리표시자를 실측값으로 바꿔 쓴다.
 #   __DEFAULT_BRANCH__   기본 브랜치 이름. git symbolic-ref 로 확인한 값.
 #   __LANGUAGES__        그 저장소에 실제로 있는 CodeQL 지원 언어. 예: [python, actions]
 #   __CHECKOUT_SHA__     actions/checkout 의 40자 SHA

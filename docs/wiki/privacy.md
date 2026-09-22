@@ -1,6 +1,6 @@
 # 개인 정보 가드 (privacy)
 
-스킬 `repo-privacy` 가 맡는다. 세팅 절차는 `plugin/skills/repo-privacy/SKILL.md` 에 있다.
+진입점 `repo-setup` 의 목적 `privacy` 다. 세팅 절차는 `plugin/skills/repo-setup/privacy/PROCEDURE.md` 에 있다.
 
 ## 하는 일
 
@@ -37,7 +37,7 @@
 ### 다른 훅 관리자와 함께 쓰기
 
 `core.hooksPath` 는 값을 하나만 가지고, 그 값을 걸면 git 이 `.git/hooks` 를 더는 보지 않는다. 그래서
-husky 처럼 `core.hooksPath` 를 잡은 관리자가 있거나 `.git/hooks` 에 이미 훅이 있으면 `setup.sh` 가 **덮지 않고
+husky 처럼 `core.hooksPath` 를 잡은 관리자가 있거나 `.git/hooks` 에 이미 훅이 있으면 `script/setup` 이 **덮지 않고
 멈춘다.** 덮으면 그쪽 훅이 조용히 죽기 때문이다. 그때는 그쪽 훅이 이 한 줄을 부르게 하면 둘 다 돈다.
 
 ```bash
@@ -46,17 +46,17 @@ husky 처럼 `core.hooksPath` 를 잡은 관리자가 있거나 `.git/hooks` 에
 
 ### 손으로 깔기
 
-`plugin/skills/repo-privacy/templates/` 의 두 파일을 대상 저장소에 복사하고 `./setup.sh` 를 돌린다.
-그다음 `./setup.sh --verify` 로 실제로 막히는지 확인한다. 이 명령은 커밋을 만들지 않고 설정도 바꾸지 않는다.
+`plugin/skills/repo-setup/privacy/templates/` 의 두 파일을 대상 저장소의 `.githooks/pre-commit` 과
+`script/setup` 으로 복사하고 `script/setup` 을 돌린다. 그다음 `script/setup --verify` 로 실제로 막히는지 확인한다. 이 명령은 커밋을 만들지 않고 설정도 바꾸지 않는다.
 
 ## 바꾸는 것
 
-- 대상 저장소에 파일 둘을 놓는다. `.githooks/pre-commit` 과 저장소 루트의 `setup.sh` 이고, 원본은
-  `plugin/skills/repo-privacy/templates/` 에 있다.
-- `./setup.sh` 가 그 클론의 `.git/config` 에 `core.hooksPath` 를 `.githooks` 로 쓴다. 이 값은 다른
+- 대상 저장소에 파일 두 개를 놓는다. `.githooks/pre-commit` 과 `script/setup` 이고, 원본은
+  `plugin/skills/repo-setup/privacy/templates/` 에 있다.
+- `script/setup` 이 그 클론의 `.git/config` 에 `core.hooksPath` 를 `.githooks` 로 쓴다. 이 값은 다른
   사람에게 전달되지 않는다.
 - `.gitignore` 에 `.private/` 한 줄을 더한다.
-- `./setup.sh --init-patterns` 는 `~/.config/git-guard/patterns` 견본을 만든다(없을 때만).
+- `script/setup --init-patterns` 는 `~/.config/git-guard/patterns` 견본을 만든다(없을 때만).
 - 팀 저장소에서는 `.gitignore` 와 규칙 문서를 고치지 않고 제안만 한다.
 
 ## 한계와 알려진 문제
@@ -64,13 +64,13 @@ husky 처럼 `core.hooksPath` 를 잡은 관리자가 있거나 `.git/hooks` 에
 - **이미 푸시된 것은 되돌리지 못한다.** 값이 이미 나갔으면 지우려 하기보다 발급처에서 폐기하는 것이 확실하다.
 - **`--no-verify` 로 우회된다.** 의도한 탈출구이고, 사람이 판단해 쓰는 자리다.
 - **패턴에 적은 것만 막는다.** 목록에 없는 값은 지나간다.
-- **`./setup.sh` 를 돌리지 않은 기계에서는 꺼진 상태다.** git 의 설계이고 husky 로도 달라지지 않는다.
+- **`script/setup` 을 돌리지 않은 기계에서는 꺼진 상태다.** git 의 설계이고 husky 로도 달라지지 않는다.
 
 ## 관련 파일
 
-- `plugin/skills/repo-privacy/SKILL.md`
-- `plugin/skills/repo-privacy/templates/pre-commit`
-- `plugin/skills/repo-privacy/templates/setup.sh`
+- `plugin/skills/repo-setup/privacy/PROCEDURE.md`
+- `plugin/skills/repo-setup/privacy/templates/pre-commit`
+- `plugin/skills/repo-setup/privacy/templates/setup`
 - `tests/guard/unit.sh`, `tests/setup/unit.sh`
 
 ## 관련 ADR

@@ -1,18 +1,6 @@
----
-name: repo-license
-description: Decide and declare a repository's license consistently. Checks for an existing LICENSE file and the license field in every manifest, and when they disagree or are missing, fetches the canonical text and makes the declarations agree, verifying the result with a bundled checker. It never picks a license on the user's behalf, because that is a legal decision. 저장소의 라이선스를 정하고 일관되게 박는다. LICENSE 파일과 매니페스트의 license 필드를 대조하고, 어긋나거나 없으면 전문을 받아 맞춘 뒤 검사기로 확인한다. 라이선스는 법적 결정이라 대신 고르지 않는다. "라이선스 넣어줘", "공개 저장소 라이선스", "LICENSE 가 없다" 같은 요청에 쓴다.
-disable-model-invocation: true
-allowed-tools: Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion
----
-
 # 라이선스
 
-$ARGUMENTS 저장소의 라이선스를 정하고 박는다(기본값은 현재 저장소).
-
-윗줄에 달러 기호가 붙은 대문자 자리표시자가 그대로 보이면, 인자를 넘기지 않는 환경이다.
-그때는 현재 저장소를 대상으로 삼는다.
-
-내가 쓰는 언어로 답한다.
+대상 저장소의 라이선스를 정하고 박는다.
 
 ## 왜 필요한가
 
@@ -24,7 +12,7 @@ $ARGUMENTS 저장소의 라이선스를 정하고 박는다(기본값은 현재 
 `license` 필드가 따로 있고, 하나만 고치면 나머지가 낡는다. 어긋나도 아무것도 깨지지 않으므로
 사람이 알아채지 못한다.
 
-## 이 스킬이 하지 않는 것
+## 이 목적이 하지 않는 것
 
 - **대신 고르지 않는다.** 라이선스는 법적 결정이다. 선택지와 차이를 보이고 사람이 정한다.
 - **법률 자문을 하지 않는다.** 아래 요약은 고르기 위한 참고이지 의견이 아니다.
@@ -39,7 +27,7 @@ $ARGUMENTS 저장소의 라이선스를 정하고 박는다(기본값은 현재 
 
 ## 단계
 
-1. **실측한다.** `repo-setup` 이 실측값을 넘겨줬으면 다시 재지 않는다. 받은 값을 쓰고 무엇을 받아
+1. **실측한다.** 진입점이 이미 잰 실측값이 있으면 다시 재지 않는다. 받은 값을 쓰고 무엇을 받아
    썼는지 보고에 적는다.
 
    ```bash
@@ -51,11 +39,11 @@ $ARGUMENTS 저장소의 라이선스를 정하고 박는다(기본값은 현재 
 
    매니페스트는 루트에만 있지 않다. 두 층 플러그인 저장소는 한 단계 아래에 둔다.
 
-2. **이미 있으면 대조만 한다.** 이 스킬 폴더의 `templates/check-license.sh` 를 저장소 루트에서
+2. **이미 있으면 대조만 한다.** 스킬 폴더의 `license/scripts/check-license.sh` 를 저장소 루트에서
    돌린다. 종료 코드가 0 이면 여기서 끝이고, 그 사실을 보고한다.
 
    ```bash
-   bash templates/check-license.sh; echo "종료 코드 $?"
+   bash "<스킬 폴더>/license/scripts/check-license.sh"; echo "종료 코드 $?"
    ```
 
    **1 이면 고치지 말고 먼저 묻는다.** 파일이 맞는지 매니페스트가 맞는지는 사람만 안다. 둘 중
@@ -87,7 +75,7 @@ $ARGUMENTS 저장소의 라이선스를 정하고 박는다(기본값은 현재 
 5. **저작권자와 연도를 채운다.** 전문에 `[year]`·`[fullname]` 자리가 있으면 **사람에게 확인받아**
    채운다. 사용자 이름이나 git 설정에서 가져와 임의로 넣지 않는다.
 
-   **이름과 이메일은 개인 정보다.** 이 저장소에 `repo-privacy` 가드가 깔려 있고 개인 패턴 목록에
+   **이름과 이메일은 개인 정보다.** 이 저장소에 `privacy` 목적의 가드가 깔려 있고 개인 패턴 목록에
    그 값이 들어 있으면 커밋이 막힌다. 막히면 가드를 끄지 말고, 어떤 이름으로 공개할지 사람에게
    다시 묻는다.
 
@@ -97,7 +85,7 @@ $ARGUMENTS 저장소의 라이선스를 정하고 박는다(기본값은 현재 
 7. **검증한다.** 다시 돌려 종료 코드가 0 인지 본다. **이 결과 없이 끝났다고 보고하지 않는다.**
 
    ```bash
-   bash templates/check-license.sh; echo "종료 코드 $?"
+   bash "<스킬 폴더>/license/scripts/check-license.sh"; echo "종료 코드 $?"
    ```
 
 ## 아는 한계
@@ -112,7 +100,7 @@ $ARGUMENTS 저장소의 라이선스를 정하고 박는다(기본값은 현재 
 
 | 파일 | 하는 일 |
 |---|---|
-| `templates/check-license.sh` | `LICENSE` 본문과 매니페스트의 `license` 필드가 같은지 본다. 0 맞음 · 1 어긋남 · 2 git 저장소 아님 |
+| `license/scripts/check-license.sh` | `LICENSE` 본문과 매니페스트의 `license` 필드가 같은지 본다. 0 맞음 · 1 어긋남 · 2 git 저장소 아님 |
 
 ## 보고
 

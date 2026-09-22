@@ -1,6 +1,6 @@
 # 호스트 보안 층 (secure)
 
-스킬 `repo-secure` 가 맡는다. 세팅 절차는 `plugin/skills/repo-secure/SKILL.md` 에 있다.
+진입점 `repo-setup` 의 목적 `secure` 다. 세팅 절차는 `plugin/skills/repo-setup/secure/PROCEDURE.md` 에 있다.
 
 ## 하는 일
 
@@ -21,7 +21,7 @@
 
 - GitHub 설정: secret scanning 과 push protection 을 켠다(`gh api -X PATCH repos/OWNER/REPO`).
 - 대상 저장소에 `.github/dependabot.yml` 과 CodeQL 워크플로 `codeql.yml` 을 놓는다. 원본은
-  `plugin/skills/repo-secure/templates/` 에 있다.
+  `plugin/skills/repo-setup/secure/templates/` 에 있다.
 - 이미 있는 워크플로를 포함해 모든 워크플로의 `uses:` 를 SHA 로 바꾸고 옆에 태그를 주석으로 남긴다.
 - 팀 저장소에서는 GitHub 설정을 바꾸지 않고 제안만 한다.
 
@@ -31,10 +31,10 @@
 
 ## 관련 파일
 
-- `plugin/skills/repo-secure/SKILL.md`
-- `plugin/skills/repo-secure/templates/check-workflow-security.sh`
-- `plugin/skills/repo-secure/templates/dependabot.yml`
-- `plugin/skills/repo-secure/templates/codeql.yml`
+- `plugin/skills/repo-setup/secure/PROCEDURE.md`
+- `plugin/skills/repo-setup/secure/scripts/check-workflow-security.sh`
+- `plugin/skills/repo-setup/secure/templates/dependabot.yml`
+- `plugin/skills/repo-setup/secure/templates/codeql.yml`
 - `tests/secure/unit.sh`
 
 ## 관련 ADR

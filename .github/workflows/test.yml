@@ -64,4 +64,4 @@ jobs:
       - name: shellcheck
         run: |
           shellcheck --version | grep -Fx "version: ${SHELLCHECK_VERSION#v}"
-          shellcheck -x -s bash plugin/skills/*/templates/*.sh setup.sh .githooks/* tests/*.sh tests/*/*.sh
+          shellcheck -x -s bash plugin/skills/repo-setup/*/scripts/*.sh plugin/skills/repo-setup/privacy/templates/setup script/setup .githooks/* tests/*.sh tests/*/*.sh

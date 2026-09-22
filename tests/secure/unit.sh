@@ -7,7 +7,7 @@
 set -u
 export PYTHONUTF8=1 PYTHONIOENCODING=utf-8
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-S="$ROOT/plugin/skills/repo-secure/templates/check-workflow-security.sh"
+S="$ROOT/plugin/skills/repo-setup/secure/scripts/check-workflow-security.sh"
 T="$(mktemp -d)"; trap 'rm -rf "$T"' EXIT
 fail=0
 check() { if [ "$1" = "$2" ]; then echo "✅ $3"; else echo "❌ $3 (기대=$1 실측=$2)"; fail=$((fail+1)); fi; }
@@ -91,7 +91,7 @@ check yes "$r" "어느 파일의 어느 액션인지 보인다"
 
 echo
 # ── 함께 싣는 골격 ─────────────────────────────────────────────────────────
-TP="$ROOT/plugin/skills/repo-secure/templates"
+TP="$ROOT/plugin/skills/repo-setup/secure/templates"
 hasf() { grep -qE "$2" "$TP/$1" 2>/dev/null && echo yes || echo no; }
 
 check yes "$([ -f "$TP/dependabot.yml" ] && echo yes || echo no)" "dependabot 골격이 있다"

@@ -1,6 +1,6 @@
 # 라이선스 (license)
 
-스킬 `repo-license` 가 맡는다. 세팅 절차는 `plugin/skills/repo-license/SKILL.md` 에 있다.
+진입점 `repo-setup` 의 목적 `license` 다. 세팅 절차는 `plugin/skills/repo-setup/license/PROCEDURE.md` 에 있다.
 
 ## 하는 일
 
@@ -14,7 +14,7 @@
 **대신 고르지 않는다.** 라이선스는 법적 결정이라 선택지와 차이를 보이고 사람이 정한다. 전문은
 손으로 적지 않고 GitHub 라이선스 API 에서 받는다. 저작권자 이름과 연도도 추측하지 않고 묻는다.
 
-함께 실리는 `templates/check-license.sh` 가 선언을 대조한다. `bash` 와 `git` 만 있으면 되고,
+함께 실리는 `license/scripts/check-license.sh` 가 선언을 대조한다. `bash` 와 `git` 만 있으면 되고,
 종료 코드는 0 맞음, 1 어긋남, 2 git 저장소 아님이다.
 
 ## 바꾸는 것
@@ -32,8 +32,8 @@
 
 ## 관련 파일
 
-- `plugin/skills/repo-license/SKILL.md`
-- `plugin/skills/repo-license/templates/check-license.sh`
+- `plugin/skills/repo-setup/license/PROCEDURE.md`
+- `plugin/skills/repo-setup/license/scripts/check-license.sh`
 - `tests/license/unit.sh`
 
 ## 관련 ADR

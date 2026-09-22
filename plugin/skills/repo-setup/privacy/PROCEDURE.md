@@ -1,25 +1,13 @@
----
-name: repo-privacy
-description: Install a pre-commit guard that blocks personal information (home paths, email addresses, internal domains, private repository names) from being committed, then prove it blocks with a probe that creates no commit. Writes .githooks/pre-commit and setup.sh and sets core.hooksPath. Use it when starting a public repository or porting the guard to another project. 공개 저장소에 개인 정보(홈 경로, 이메일, 사내 도메인, 사적인 저장소 이름)가 커밋되는 것을 막는 pre-commit 가드를 깔고, 커밋을 만들지 않는 탐침으로 실제로 막히는지 확인한다. .githooks/pre-commit 과 setup.sh 를 두고 core.hooksPath 를 건다. 새 공개 저장소를 시작할 때, 세션 프로필이 커밋 가드가 꺼졌다고 알릴 때, 다른 프로젝트로 가드를 옮길 때 쓴다.
-disable-model-invocation: true
-allowed-tools: Read, Write, Edit, Grep, Glob, Bash
----
-
 # 개인 정보 가드
 
-$ARGUMENTS 에 가드를 깐다(기본값은 현재 저장소). 깔고 나서 **실제로 막히는지 증명한다.**
-
-윗줄에 달러 기호가 붙은 대문자 자리표시자가 그대로 보이면, 인자를 넘기지 않는 환경이다.
-그때는 현재 저장소에 깐다.
-
-내가 쓰는 언어로 답한다.
+대상 저장소에 가드를 깐다. 깔고 나서 **실제로 막히는지 증명한다.**
 
 ## 왜 필요한가
 
 훅 파일을 커밋해 두어도 그것만으로는 아무 일도 일어나지 않는다. git 은 훅을 `$GIT_DIR/hooks` 에서 찾고,
 그 위치를 바꾸는 `core.hooksPath` 는 `.git/config` 에 저장되어 **클론과 함께 전달되지 않는다.** 그래서
 새로 클론한 곳과 새 워크트리에서는 가드가 꺼진 상태이고, **막히는 일이 없으므로 아무도 눈치채지 못한다.**
-조용히 꺼지는 이 상태가 이 스킬이 푸는 문제다.
+조용히 꺼지는 이 상태가 이 목적이 푸는 문제다.
 
 패턴 목록은 저장소 밖에 둔다. **패턴 파일에 든 값을 읽어서 답, 커밋, 문서에 옮겨 적지 마라.** 그 값들이
 바로 가드가 기록에 남지 않게 하려는 것이다. 개수와 파일 경로만 보고한다.
@@ -41,7 +29,7 @@ $ARGUMENTS 에 가드를 깐다(기본값은 현재 저장소). 깔고 나서 **
 | 6 | `CLAUDE.md`·`CONTRIBUTING.md` | 제안만. 팀 규칙 문서다 |
 | 7 | 저장소 보안 설정(`gh api -X PATCH`) | **절대 실행하지 않는다.** 조직 정책이고 관리자 권한이 필요하다 |
 
-1·3·4·5단계는 그대로 해도 된다. 훅 파일과 `setup.sh` 는 새 파일이고, `core.hooksPath` 는 내 `.git/config`
+1·3·4·5단계는 그대로 해도 된다. 훅 파일과 `script/setup` 은 새 파일이고, `core.hooksPath` 는 내 `.git/config`
 에만 쓰이므로 남에게 영향이 없다. 다만 그 두 파일을 **커밋할지는 팀에 물어야 한다.** 커밋하지 않고
 자기 작업 트리에만 두어도 가드는 동작한다.
 
@@ -65,8 +53,8 @@ $ARGUMENTS 에 가드를 깐다(기본값은 현재 저장소). 깔고 나서 **
 순서대로 한다. 5단계를 건너뛰지 않는다. 팀 저장소라면 2·6단계는 제안으로 바꾼다.
 
 1. **손대기 전에 저장소를 살핀다.** 넷을 모두 실측한다. 어느 것도 추측하지 않는다.
-   `repo-setup` 이 이 스킬을 부르면서 실측값을 넘겨줬으면 **다시 재지 않는다.** 받은 값을 그대로 쓰고
-   무엇을 받아 썼는지 보고에 적는다. 단독으로 불렸으면 여기서 직접 잰다.
+   진입점이 이미 잰 실측값이 있으면 **다시 재지 않는다.** 받은 값을 그대로 쓰고
+   무엇을 받아 썼는지 보고에 적는다. 진입점이 잰 값이 없으면 여기서 직접 잰다.
    - `git rev-parse --show-toplevel` 로 git 저장소인지 본다. 아니면 멈춘다.
    - `git config core.hooksPath` 를 읽고, `.git/hooks` 에 `.sample` 이 아닌 실행 파일이 있는지 본다.
      **둘 중 하나라도 있으면 다른 훅이 이미 돌고 있는 것이다.** `core.hooksPath` 는 값을 하나만 가지고,
@@ -89,20 +77,20 @@ $ARGUMENTS 에 가드를 깐다(기본값은 현재 저장소). 깔고 나서 **
 2. **무시 규칙을 먼저 넣는다.**(팀 저장소면 제안만) 대상 저장소의 `.gitignore` 에 `.private/` 가 있는지 확인하고 없으면 넣는다.
    패턴 파일을 만들기 **전에** 해야 한다. 이 줄이 없으면 패턴 파일이 커밋 대상으로 잡힌다.
 
-3. **파일 둘을 복사한다.** 이 스킬 폴더의 `templates/pre-commit` 을 대상 저장소의
-   `.githooks/pre-commit` 으로, `templates/setup.sh` 를 저장소 루트의 `setup.sh` 로 복사한다.
+3. **파일 둘을 복사한다.** 스킬 폴더의 `privacy/templates/pre-commit` 을 대상 저장소의
+   `.githooks/pre-commit` 으로, `privacy/templates/setup` 을 대상 저장소의 `script/setup` 으로 복사한다.
    **내용을 새로 쓰지 않는다.** 복사한 뒤 실행 비트를 확인한다. 그 저장소에만 있는 내부 문서
    폴더가 있으면 훅의 `case` 문에 덧붙인다. 없으면 기본값 `.private/*` 그대로 둔다.
 
 4. **켠다.** 길이 둘이고, 1단계가 어느 쪽인지 알려 준다.
 
-   **4a. 다른 훅이 없다.** `core.hooksPath` 가 비어 있고 `.git/hooks` 에도 훅이 없다. `./setup.sh` 를 돌린다. 이 기계의 첫 저장소라면
-   `./setup.sh --init-patterns` 를 돌리고, 만들어진 `~/.config/git-guard/patterns` 를 **사람이 직접 채우게
+   **4a. 다른 훅이 없다.** `core.hooksPath` 가 비어 있고 `.git/hooks` 에도 훅이 없다. `script/setup` 을 돌린다. 이 기계의 첫 저장소라면
+   `script/setup --init-patterns` 를 돌리고, 만들어진 `~/.config/git-guard/patterns` 를 **사람이 직접 채우게
    한다.** 그 파일의 내용은 절대 대신 쓰지 않는다. 무엇이 민감한지는 사람만 안다. 두 번째 저장소부터는
-   공용 목록이 이미 있으므로 `./setup.sh` 만 돌리면 된다.
+   공용 목록이 이미 있으므로 `script/setup` 만 돌리면 된다.
 
    **4b. 다른 훅이 이미 있다.** `core.hooksPath` 를 잡은 관리자(husky 등)일 수도 있고, `.git/hooks` 에 놓인
-   훅일 수도 있다. `setup.sh` 는 두 경우 모두 덮지 않고 멈춘다. `--force` 를 **쓰지 말고**, `core.hooksPath` 를
+   훅일 수도 있다. `script/setup` 은 두 경우 모두 덮지 않고 멈춘다. `--force` 를 **쓰지 말고**, `core.hooksPath` 를
    손으로 고치지도 않는다. 그쪽 훅이 이 한 줄을 부르게 해 둘 다 돌게 한다.
 
    ```bash
@@ -114,10 +102,10 @@ $ARGUMENTS 에 가드를 깐다(기본값은 현재 저장소). 깔고 나서 **
    다시 만들면 손으로 넣은 줄이 사라질 수 있다. 이 길로 갔다는 사실과 이유를 보고에 적는다. `--force` 는
    기존 훅을 버리기로 사람이 정했을 때만 쓴다.
 
-5. **막히는지 증명한다.** 설정을 걸었다고 적용된 것이 아니다. `./setup.sh --verify` 를 돌리고 종료 코드를 본다.
+5. **막히는지 증명한다.** 설정을 걸었다고 적용된 것이 아니다. `script/setup --verify` 를 돌리고 종료 코드를 본다.
 
    ```bash
-   ./setup.sh --verify; echo "exit=$?"
+   script/setup --verify; echo "exit=$?"
    ```
 
    임시 인덱스에 홈 경로를 담은 탐침 파일 하나만 올리고, git 이 커밋할 때 부를 `pre-commit` 을 그 인덱스로
@@ -139,13 +127,13 @@ $ARGUMENTS 에 가드를 깐다(기본값은 현재 저장소). 깔고 나서 **
    exit 0 이 아니면 가드는 동작하지 않는 것이다. 왜인지 알아내기 전에는 성공했다고 보고하지 않는다.
 
 6. **에이전트에게 알린다.**(팀 저장소면 제안만) 그 저장소의 `CLAUDE.md`·`AGENTS.md`·`CONTRIBUTING.md` 의 개발 환경 절 첫 줄에
-   `./setup.sh` 를 넣고, `--no-verify` 가 에이전트의 탈출구가 아니라는 것을 명시한다. 규칙 파일에 없는
+   `script/setup` 을 넣고, `--no-verify` 가 에이전트의 탈출구가 아니라는 것을 명시한다. 규칙 파일에 없는
    규칙은 서브에이전트에게 존재하지 않는 규칙이다.
 
-7. **호스트 층은 `repo-secure` 에 넘긴다.** 로컬 훅은 홈 경로와 사내 도메인을 잡는 **유일한**
+7. **호스트 층은 `secure` 목적에 넘긴다.** 로컬 훅은 홈 경로와 사내 도메인을 잡는 **유일한**
    층이지만, 이미 푸시된 것과 `--no-verify` 로 넘긴 것은 잡지 못한다. 그 구멍은 호스트의 secret
-   scanning 과 push protection 이 메운다. **여기서 직접 켜지 않는다.** `repo-secure` 가 그것을
-   소유하고, 켠 뒤 되읽어 확인하는 절차까지 갖고 있다. 단독으로 불렸으면 **호스트 층이 아직
+   scanning 과 push protection 이 메운다. **여기서 직접 켜지 않는다.** `secure` 목적이 그것을
+   소유하고, 켠 뒤 되읽어 확인하는 절차까지 갖고 있다. 이 목적만 골랐으면 **호스트 층이 아직
    켜지지 않았을 수 있다는 사실을 보고에 적는다.**
 
 ## 보고
@@ -156,12 +144,12 @@ $ARGUMENTS 에 가드를 깐다(기본값은 현재 저장소). 깔고 나서 **
 
 ## 템플릿
 
-이 스킬 폴더 안에 실제 파일로 있다. **본문에 옮겨 적지 않는다.** 정본이 둘이 되면 한쪽이 낡는다.
+스킬 폴더의 `privacy/templates/` 에 실제 파일로 있다. **본문에 옮겨 적지 않는다.** 정본이 둘이 되면 한쪽이 낡는다.
 
 | 파일 | 대상 저장소의 어디로 |
 |---|---|
-| `templates/pre-commit` | `.githooks/pre-commit` |
-| `templates/setup.sh` | 저장소 루트의 `setup.sh` |
+| `privacy/templates/pre-commit` | `.githooks/pre-commit` |
+| `privacy/templates/setup` | `script/setup` |
 
 스킬이 깔릴 때 폴더가 통째로 복사되고 실행 비트도 보존된다. 복사한 뒤 `chmod +x` 가 필요하면
 그 자리에서 채운다. 두 파일의 머리 주석에 무엇을 왜 하는지가 적혀 있으므로, 고치기 전에 읽는다.

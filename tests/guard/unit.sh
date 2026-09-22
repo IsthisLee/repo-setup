@@ -17,7 +17,7 @@ mkrepo() {
   mkdir -p "$d"; git init -q "$d"
   git -C "$d" config user.name t; git -C "$d" config user.email t@example.invalid
   git -C "$d" config commit.gpgsign false
-  mkdir -p "$d/.githooks"; cp "$ROOT/plugin/skills/repo-privacy/templates/pre-commit" "$d/.githooks/"
+  mkdir -p "$d/.githooks"; cp "$ROOT/plugin/skills/repo-setup/privacy/templates/pre-commit" "$d/.githooks/"
   chmod +x "$d/.githooks/pre-commit"
   git -C "$d" config core.hooksPath .githooks
   printf '%s\n' '.private/' > "$d/.gitignore"

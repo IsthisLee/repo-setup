@@ -2,8 +2,8 @@
 
 용도에 맞게 git 저장소를 세팅합니다. **기억할 것은 커맨드 하나뿐입니다.**
 
-진입점이 저장소를 실측하고, 해당하는 것만 골라, 좁은 스킬을 순서대로 부르고, **무엇을 했고 무엇을 왜
-건너뛰었는지** 보고합니다. 다루는 것은 git 과 GitHub 에 속하는 것뿐이고, 린터나 빌드 설정 같은 언어별
+진입점이 저장소를 실측하고, 해당하는 목적만 골라, 그 목적의 절차를 순서대로 따르고, **무엇을 했고
+무엇을 왜 건너뛰었는지** 보고합니다. 다루는 것은 git 과 GitHub 에 속하는 것뿐이고, 린터나 빌드 설정 같은 언어별
 도구 체인은 다루지 않습니다.
 
 ## 첫 실행
@@ -14,9 +14,11 @@
 /repo-setup:repo-setup 공개 오픈소스 라이브러리
 ```
 
-용도를 적지 않으면 실측 결과를 보인 뒤 물어봅니다. 지금 판의 Claude Code 에서는 진입점이 좁은 스킬을
-직접 부르지 못합니다([알려진 문제](docs/wiki/setup-flow.md#한계와-알려진-문제)). 그때는
-`/repo-setup:repo-privacy` 처럼 좁은 스킬을 직접 부릅니다.
+용도를 적지 않으면 실측 결과를 보인 뒤 물어봅니다. 목적 이름을 주면 그 목적만 돕니다.
+
+```
+/repo-setup:repo-setup license
+```
 
 ## 설치
 
@@ -70,15 +72,42 @@ URL 에 이미 설정된 인증(git credential helper, GitHub CLI, SSH 순)을 �
 2026-09-18, 상태 OPEN). **1.7.0 에서는 위 네 형태 모두 Claude Code 가 읽는 자리에 스킬이
 놓였습니다.** 이슈가 적은 재현 형태(`-g -a claude-code`)도 그랬습니다.
 
+## 0.1 판에서 옮겨 오기
+
+0.2.0 부터 스킬은 `repo-setup` 하나입니다. `/repo-setup:repo-privacy` 같은 목적별 커맨드는 사라졌고,
+`/repo-setup:repo-setup privacy` 처럼 진입점에 목적 이름을 줍니다.
+
+**Claude Code 플러그인**으로 설치했으면 업데이트한 뒤 Claude Code 를 다시 시작합니다.
+
+```
+claude plugin marketplace update repo-setup
+claude plugin update repo-setup@repo-setup
+```
+
+업데이트하면 `claude plugin details repo-setup` 에 스킬이 한 개만 나옵니다. 0.1.0 의 캐시 폴더
+(`~/.claude/plugins/cache/repo-setup/repo-setup/0.1.0/`)는 디스크에 남습니다.
+
+**`skills` CLI** 로 설치했으면 새 판을 받은 뒤 옛 스킬 다섯 개를 지웁니다. 새 판을 받아도 옛 스킬 폴더와
+`skills-lock.json` 의 항목은 지워지지 않습니다. 전역으로 설치했으면 두 명령에 모두 `-g` 를 붙입니다.
+
+```bash
+npx skills@latest add IsthisLee/repo-setup
+npx skills@latest remove repo-privacy repo-license repo-ci repo-secure repo-contrib -y
+```
+
+**이미 가드를 설치한 저장소**의 `setup.sh` 는 그대로 동작합니다. 0.2.0 은 같은 스크립트를 `script/setup` 에
+놓습니다. 옮기려면 `mkdir -p script && git mv setup.sh script/setup` 을 돌리고, 그 저장소 문서의
+`./setup.sh` 를 `script/setup` 으로 고칩니다.
+
 ## 목적 다섯
 
-| 목적 | 하는 일 |
-|---|---|
-| [개인 정보 가드](docs/wiki/privacy.md) | 홈 경로·이메일·사내 식별자가 커밋되는 것을 커밋 시점에 막습니다 |
-| [라이선스](docs/wiki/license.md) | 라이선스를 정하고 `LICENSE` 와 매니페스트가 같은 말을 하게 합니다 |
-| [테스트 워크플로](docs/wiki/ci.md) | 테스트가 푸시마다 돌게 하고 실제로 한 번 돌려 확인합니다 |
-| [호스트 보안 층](docs/wiki/secure.md) | 호스트의 보안 기능을 켜고 액션을 SHA 로 고정합니다 |
-| [협업 준비](docs/wiki/contrib.md) | 기여 안내와 신고처, 서식, 리뷰 담당을 놓고 기본 브랜치를 보호합니다 |
+| 목적 | 인자 | 하는 일 |
+|---|---|---|
+| [개인 정보 가드](docs/wiki/privacy.md) | `privacy` | 홈 경로·이메일·사내 식별자가 커밋되는 것을 커밋 시점에 막습니다 |
+| [라이선스](docs/wiki/license.md) | `license` | 라이선스를 정하고 `LICENSE` 와 매니페스트가 같은 말을 하게 합니다 |
+| [테스트 워크플로](docs/wiki/ci.md) | `ci` | 테스트가 푸시마다 돌게 하고 실제로 한 번 돌려 확인합니다 |
+| [호스트 보안 층](docs/wiki/secure.md) | `secure` | 호스트의 보안 기능을 켜고 액션을 SHA 로 고정합니다 |
+| [협업 준비](docs/wiki/contrib.md) | `contrib` | 기여 안내와 신고처, 서식, 리뷰 담당을 놓고 기본 브랜치를 보호합니다 |
 
 ## 문서
 

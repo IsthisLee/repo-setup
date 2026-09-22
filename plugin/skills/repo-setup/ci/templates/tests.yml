@@ -1,9 +1,9 @@
-# repo-ci 스킬이 놓는 테스트 워크플로 골격이다. 자리표시자를 실측값으로 바꿔 쓴다.
+# repo-setup 의 ci 목적이 놓는 테스트 워크플로 골격이다. 자리표시자를 실측값으로 바꿔 쓴다.
 #   __DEFAULT_BRANCH__  기본 브랜치 이름. git symbolic-ref 로 확인한 값을 넣는다.
 #   __TEST_COMMAND__    find-test-command.sh 가 알려 준 명령.
 #   __SETUP_STEPS__     언어별 준비 단계. 필요 없으면 그 줄을 통째로 지운다.
 #
-# 액션은 태그로 적혀 있다. SHA 고정은 repo-secure 가 맡는다. 이 파일만 놓고 끝냈으면
+# 액션은 태그로 적혀 있다. SHA 고정은 secure 목적이 맡는다. 이 파일만 놓고 끝냈으면
 # 액션이 고정되지 않은 상태라는 사실을 보고에 적는다.
 name: Tests
 
