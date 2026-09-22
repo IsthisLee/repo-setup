@@ -21,7 +21,7 @@
 
 ## 결정
 
-`repo-setup` 하나만 스킬로 남기고 `disable-model-invocation: true` 를 유지한다. 다섯 목적은 그 스킬 폴더
+스킬로는 `repo-setup` 만 남기고 `disable-model-invocation: true` 를 유지한다. 다섯 목적은 그 스킬 폴더
 안의 폴더가 되고, 폴더마다 절차 문서 `PROCEDURE.md` 를 둔다. 진입점은 고른 목적의 절차 문서를 읽어 따른다.
 목적 폴더 안에서는 대상 저장소로 복사하는 파일을 `templates/` 에, 스킬 폴더에서 그대로 실행하는 파일을
 `scripts/` 에 둔다.

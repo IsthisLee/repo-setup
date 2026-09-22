@@ -121,11 +121,11 @@
 | 파일 | 하는 일 |
 |---|---|
 | `contrib/scripts/check-contrib.sh` | GitHub 이 보는 자리를 모두 훑어 무엇이 있는지 본다. 항목 이름을 인자로 주면 그것만 본다 |
-| `contrib/templates/CONTRIBUTING.md` | 기여 안내 골격. 자리표시자 셋 |
-| `contrib/templates/SECURITY.md` | 취약점 신고 골격. 자리표시자 둘 |
+| `contrib/templates/CONTRIBUTING.md` | 기여 안내 골격. 자리표시자 세 개 |
+| `contrib/templates/SECURITY.md` | 취약점 신고 골격. 자리표시자 두 개 |
 | `contrib/templates/pull_request_template.md` | PR 서식. 왜·무엇·근거·확인하지 못한 것 |
 | `contrib/templates/ISSUE_TEMPLATE/bug_report.md` | 버그 신고 서식 |
-| `contrib/templates/CODEOWNERS` | 리뷰 담당 골격. 자리표시자 하나 |
+| `contrib/templates/CODEOWNERS` | 리뷰 담당 골격. 자리표시자 한 개 |
 
 ## 보고
 

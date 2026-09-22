@@ -93,7 +93,7 @@
 | 파일 | 하는 일 |
 |---|---|
 | `ci/scripts/find-test-command.sh` | 테스트 명령을 실측한다. 0 찾음 · 1 못 찾음 · 2 git 저장소 아님 |
-| `ci/templates/tests.yml` | 워크플로 골격. 자리표시자 셋을 실측값으로 바꿔 쓴다 |
+| `ci/templates/tests.yml` | 워크플로 골격. 자리표시자 세 개를 실측값으로 바꿔 쓴다 |
 
 실측기가 보는 것은 순서대로 `.check.toml` 의 `test_command`, `package.json` 의 `scripts.test`,
 `Makefile` 의 `test` 대상, `pyproject.toml` 의 pytest 설정, `Cargo.toml`, `go.mod` 다.
