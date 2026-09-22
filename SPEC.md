@@ -397,10 +397,10 @@ main 보호 (룰셋)
   - `privacy.md`, `license.md`, `ci.md`, `secure.md`, `contrib.md`
   - `setup-flow.md`: 진입점의 실측, 확인 흐름, 변경 전달
   - `development.md`: 이 저장소의 구조, 테스트, 자체 CI, 기여 방법
-- **페이지의 절.** 순서대로 다음과 같다.
-  1. 무엇을 하나(두세 문장)
-  2. 어떻게 동작하나(트리거에서 결과까지 단계별)
-  3. 무엇을 바꾸나(파일, GitHub 설정, 다른 사람에게 미치는 영향)
+- **페이지의 절.** 순서대로 다음과 같다. 제목은 전역 규칙에 따라 명사형으로 쓴다(② 에서 질문형이던 제목을 바꿨다).
+  1. 하는 일(두세 문장)
+  2. 동작(트리거에서 결과까지 단계별)
+  3. 바꾸는 것(파일, GitHub 설정, 다른 사람에게 미치는 영향)
   4. 한계와 알려진 문제
   5. 관련 파일(저장소 경로)
   6. 관련 ADR(번호와 제목 링크)
@@ -409,7 +409,7 @@ main 보호 (룰셋)
 - **갱신.** 기능을 바꾸는 PR 은 그 기능의 wiki 페이지를 같은 PR 에서 고친다. 코드와 설명이 같은 리뷰를 거치게 하려는 것이다.
 - **낡음을 막는 검사.** ② 에서 `tests/invariants.sh` 에 다음을 더한다.
   - 목적마다 `docs/wiki/<목적>.md` 가 있고, `docs/wiki/README.md` 가 모든 페이지를 가리킨다.
-  - wiki 페이지에 백틱으로 적힌 저장소 경로(`plugin/`, `tests/`, `docs/`, `.githooks/` 로 시작하는 것)가 실제로 있다.
+  - wiki 페이지에 백틱으로 적힌 저장소 경로(`plugin/`, `tests/`, `docs/` 로 시작하는 것)가 실제로 있다. `.githooks/` 와 `.github/` 는 보지 않는다. privacy 페이지의 `.githooks/team-patterns` 처럼 대상 저장소에 놓일 경로와 글자만으로 갈리지 않기 때문이다(② 에서 확인).
   - wiki 페이지가 가리키는 ADR 번호의 파일이 `docs/adr/` 에 있다.
   - `docs/adr/README.md` 가 모든 ADR 을 가리킨다.
 - **README.** 목표는 100줄 안팎이고, 존댓말(합니다체)로 새로 쓴다. 지금 README 의 스킬별 절은 ② 에서 해당 wiki 페이지로 **옮기기만** 한다. 옮기면서 내용을 고치지 않는다. 낡은 문장(예: "Skills (2)")은 README 에 남는 부분이면 ② 에서 고치고, wiki 로 옮긴 부분이면 그 기능의 PR 이나 ⑭ 에서 고친다.
@@ -620,6 +620,7 @@ GitHub 없이 로컬 임시 저장소 넷을 만들어 privacy 만 돌린다(`/r
 
 | # | 상태 | PR |
 |---|---|---|
-| PR #1 | 열림, 병합 대기 | https://github.com/IsthisLee/repo-setup/pull/1 |
-| ① | 열림, 두 러너 통과(2026-09-22), 병합 대기 | https://github.com/IsthisLee/repo-setup/pull/2 |
-| ② ~ ⑭ | 대기 | |
+| PR #1 | 병합(2026-09-22, 두 러너에서 177건 통과) | https://github.com/IsthisLee/repo-setup/pull/1 |
+| ① | 병합(2026-09-22) | https://github.com/IsthisLee/repo-setup/pull/2 |
+| ② | 열림, 두 러너 통과(2026-09-22), 병합 대기 | https://github.com/IsthisLee/repo-setup/pull/3 |
+| ③ ~ ⑭ | 대기 | |

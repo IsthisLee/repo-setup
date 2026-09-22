@@ -185,6 +185,80 @@ case_line=$(grep -n '\.private/\*)' "$TPL/pre-commit" | head -1 | cut -d: -f2- |
 if [ "$case_line" = ".private/*)" ]; then ok "훅 템플릿의 경로 목록이 저장소를 가리지 않는다"
 else bad "훅 템플릿의 기본 경로 목록이 '.private/*' 하나가 아니다: ${case_line}"; fi
 
+# 문서는 README(무엇·설치), docs/wiki(구현된 기능), docs/adr(이유)로 나뉜다.
+# 목적을 더하고 wiki 페이지를 빠뜨리거나 목차에 올리지 않으면, 그 기능의 설명이 조용히 사라진다.
+# 목적 이름은 스킬 폴더에서 읽는다. 목록을 여기에 적으면 목적을 더할 때 이 검사도 낡는다.
+if python3 - "$R" <<'WIKI'
+import pathlib, re, sys
+root = pathlib.Path(sys.argv[1])
+wiki = root / "docs/wiki"
+purposes = {d.name.removeprefix("repo-") for d in (root / "plugin/skills").iterdir()
+            if d.is_dir() and d.name != "repo-setup"}
+missing = sorted(p for p in purposes if not (wiki / f"{p}.md").is_file())
+assert not missing, "wiki 페이지가 없는 목적: " + ", ".join(missing)
+index = (wiki / "README.md").read_text(encoding="utf-8")
+linked = set(re.findall(r"\]\(([^)#\s]+\.md)\)", index))
+pages = {p.name for p in wiki.glob("*.md") if p.name != "README.md"}
+unlisted = sorted(pages - linked)
+assert not unlisted, "docs/wiki/README.md 가 가리키지 않는 페이지: " + ", ".join(unlisted)
+WIKI
+then ok "목적마다 wiki 페이지가 있고 목차가 모든 페이지를 가리킨다"
+else bad "wiki 페이지가 빠졌거나 목차에 없다"; fi
+
+# wiki 는 구현된 것을 설명하므로 파일을 옮기면 경로가 먼저 낡는다. 낡은 경로는 링크가 아니라
+# 백틱 안의 글자라서 아무것도 깨지지 않는다. 글롭은 하나라도 맞으면 있는 것으로 본다.
+# .githooks/ 와 .github/ 는 보지 않는다. 대상 저장소에 놓일 경로(.githooks/team-patterns 등)와
+# 글자만으로 갈리지 않아서, 보면 맞는 설명이 실패한다.
+if python3 - "$R" <<'WPATH'
+import pathlib, re, sys
+root = pathlib.Path(sys.argv[1])
+bad = []
+for page in sorted((root / "docs/wiki").glob("*.md")):
+    for p in re.findall(r"`((?:plugin|tests|docs)/[^`\s<>{}]*)`", page.read_text(encoding="utf-8")):
+        found = any(root.glob(p.rstrip("/"))) if "*" in p else (root / p).exists()
+        if not found:
+            bad.append(f"{page.name}: {p}")
+assert not bad, "wiki 가 가리키는 경로가 없다: " + ", ".join(bad)
+WPATH
+then ok "wiki 가 적은 저장소 경로가 모두 있다"
+else bad "wiki 에 없는 경로가 적혀 있다. 옮긴 파일의 새 경로로 고쳐라"; fi
+
+# wiki 는 이유를 쓰지 않고 ADR 을 링크한다. 링크가 끊기면 이유가 사라진 설명만 남는다.
+if python3 - "$R" <<'WADR'
+import pathlib, re, sys
+root = pathlib.Path(sys.argv[1])
+adr = root / "docs/adr"
+bad = []
+for page in sorted((root / "docs/wiki").glob("*.md")):
+    text = page.read_text(encoding="utf-8")
+    for link in re.findall(r"\]\((\.\./adr/[^)#\s]+)\)", text):
+        if not (page.parent / link).resolve().is_file():
+            bad.append(f"{page.name}: {link}")
+    for num in re.findall(r"ADR (\d{4})", text):
+        if not list(adr.glob(f"{num}-*.md")):
+            bad.append(f"{page.name}: ADR {num}")
+assert not bad, "wiki 가 가리키는 ADR 이 없다: " + ", ".join(bad)
+WADR
+then ok "wiki 가 가리키는 ADR 이 모두 있다"
+else bad "wiki 가 없는 ADR 을 가리킨다"; fi
+
+# ADR 은 번호를 다시 쓰지 않고 지우지도 않는다. 목록에서 빠진 ADR 은 아무도 찾지 못한다.
+if python3 - "$R" <<'ADRIDX'
+import pathlib, re, sys
+adr = pathlib.Path(sys.argv[1]) / "docs/adr"
+files = sorted(p.name for p in adr.glob("*.md") if p.name != "README.md")
+assert files, "docs/adr/ 에 ADR 이 없다"
+badname = [f for f in files if not re.fullmatch(r"\d{4}-[a-z0-9]+(?:-[a-z0-9]+)*\.md", f)]
+assert not badname, "이름이 NNNN-<영어-kebab-slug>.md 가 아닌 ADR: " + ", ".join(badname)
+nums = [f[:4] for f in files]
+assert len(nums) == len(set(nums)), "번호가 겹치는 ADR 이 있다: " + ", ".join(files)
+linked = set(re.findall(r"\]\(([^)#\s]+\.md)\)", (adr / "README.md").read_text(encoding="utf-8")))
+unlisted = [f for f in files if f not in linked]
+assert not unlisted, "docs/adr/README.md 가 가리키지 않는 ADR: " + ", ".join(unlisted)
+ADRIDX
+then ok "ADR 이름이 형식에 맞고 목록이 모든 ADR 을 가리킨다"
+else bad "ADR 이름이 형식과 다르거나 목록에서 빠진 ADR 이 있다"; fi
+
 # 개인 패턴이 저장소에 새어 들어가면 안 된다. 이 저장소가 다루는 주제가 바로 그것이다.
 if git -C "$R" ls-files 2>/dev/null | grep -q .; then
   leak=$(git -C "$R" grep -lE '/Users/[A-Za-z]|/home/[A-Za-z]' -- . 2>/dev/null | grep -v '^plugin/skills/[a-z-]*/templates/' | grep -v '^tests/' || true)
